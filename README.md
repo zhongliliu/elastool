@@ -1,4 +1,4 @@
-ElasTool is an automated toolkit for calculating the second-order elastic constants (SOECs) of any crystal systems belonging to two- and three-dimensional. It can utilize three kinds of strain-matrix sets, the high-efficiency strain-matrix sets (OHESS) [1], the universal linear-independent coupling strains (ULICS) [2] and the all-single-element strain-matrix sets (ASESS) [1] to calculate the SOECs automatically. In an automatic manner, ElasTool can deal with both zero- and high-temperature elastic constants.
+ElasTool is an automated toolkit for calculating the second-order elastic constants (SOECs) of any crystal systems belonging to two- and three-dimensional. It utilizes three kinds of strain-matrix sets, the high-efficiency strain-matrix sets (OHESS) [1], the universal linear-independent coupling strains (ULICS) [2] and the all-single-element strain-matrix sets (ASESS) [1] to automatically calculate the SOECs. Elastool is very flexibible and has the capability of accurately determine the elastic constant and mechanical properties of materials at both zero-temperature and/or finite temperature and pressure. 
 
 Presently, ElasTool interfaces to VASP package for calculating the accurate stresses of strained crystal. But the interfaces to other DFT packages can also be easily implemented.
 
@@ -12,7 +12,7 @@ High-pressure elastic constants example:
 
 https://arxiv.org/abs/2005.04331
 
-ElasTool is an automated toolkit for calculating the second-order elastic constants (SOECs) of any crystal systems belonging to two- and three-dimensional. It can utilize three kinds of strain-matrix sets, the high-efficiency strain-matrix sets (OHESS) [1], the universal linear-independent coupling strains (ULICS) [2] and the all-single-element strain-matrix sets (ASESS) [1] to calculate the SOECs automatically. In an automatic manner, ElasTool can deal with both zero- and high-temperature elastic constants.
+ElasTool is an automated toolkit for calculating the second-order elastic constants (SOECs) of any crystal systems belonging to two- and three-dimensional. It utilizes three kinds of strain-matrix sets, the high-efficiency strain-matrix sets (OHESS) [1], the universal linear-independent coupling strains (ULICS) [2] and the all-single-element strain-matrix sets (ASESS) [1] to automatically calculate the SOECs. Elastool is very flexibible and has the capability of accurately determine the elastic constant and mechanical properties of materials at both zero-temperature and/or finite temperature and pressure. 
 
 Presently, ElasTool interfaces to VASP package for calculating the accurate stresses of strained crystal. But the interfaces to other DFT packages can also be easily implemented.
 
