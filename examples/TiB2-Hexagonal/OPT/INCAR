@@ -1,0 +1,25 @@
+########-------- Step: opt --------########
+PREC    = Accurate
+ENCUT   = 600.0
+EDIFF   = 1e-6
+EDIFFG  = -0.001
+
+IBRION  = 1
+ISIF    = 3
+ISYM    = 2
+NSW     = 50
+ISMEAR  = 0
+SIGMA   = 0.05
+POTIM   = 0.5
+PSTRESS = 0.001
+
+NPAR    = 4
+NSIM    = 4
+ALGO    = Very Fast
+IALGO   = 48
+ISTART  = 0
+
+LPLANE  = .TRUE.
+LCHARG  = .FALSE.
+LWAVE   = .FALSE.
+

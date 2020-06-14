@@ -1,0 +1,11 @@
+Installation:
+
+The following packages are required:
+1. Python 3.5 or later.
+2. NumPy.
+3. Spglib.
+4. ASE.
+5. Pandas
+
+In the main directory, execute,
+python setup.py install [--prefix=/path/to/install/]

@@ -1,0 +1,125 @@
+########-------- Step: fixed-pressure-opt --------########
+PREC    = Accurate
+ENCUT   = 390
+EDIFF   = 1e-6
+EDIFFG  = -0.001
+
+IBRION  = 1
+ISIF    = 3
+ISYM    = 2
+NSW     = 50
+ISMEAR  = 2
+SIGMA   = 0.2
+POTIM   = 0.1
+PSTRESS = 0.001
+
+NPAR    = 4
+NSIM    = 4
+ALGO    = Normal
+IALGO   = 48
+ISTART  = 0
+
+LPLANE  = .TRUE.
+LCHARG  = .FALSE.
+LWAVE   = .FALSE.
+IWAVPR  = 11
+
+########-------- Step: fixed-volume-opt --------########
+PREC    = Accurate
+ENCUT   = 390
+EDIFF   = 1e-6
+EDIFFG  = -0.001
+
+IBRION  = 1
+ISIF    = 2
+ISYM    = 2
+NSW     = 50
+ISMEAR  = 2
+SIGMA   = 0.2
+POTIM   = 0.1
+
+NPAR    = 4
+NSIM    = 4
+ALGO    = Normal
+IALGO   = 48
+ISTART  = 0
+
+LPLANE  = .TRUE.
+LCHARG  = .FALSE.
+LWAVE   = .FALSE.
+IWAVPR  = 11
+
+########-------- Step: NPT-MD --------########
+ENCUT   = 390
+EDIFF   = 1E-4
+ALGO    = Normal
+IALGO   = 48
+MAXMIX  = 40
+IBRION  = 0
+NSW     = 1000
+NBLOCK  = 1
+KBLOCK  = 10
+POTIM   = 2
+ISYM    = 0
+
+# NPT ensemble
+ISIF    = 3
+MDALGO  = 3
+PSTRESS = 0.001
+TEBEG   = 1000
+PMASS   = 5000
+LANGEVIN_GAMMA = 10
+LANGEVIN_GAMMA_L = 1
+
+LREAL   = False
+NELMIN  = 4
+PREC    = Normal
+ISTART  = 0
+ISMEAR  = 2
+SIGMA   = 0.2
+
+NPAR    = 4
+NCORE   = 1
+NSIM    = 4
+NWRITE  = 0
+
+LCHARG  = .FALSE.
+LPLANE  = .TRUE.
+LWAVE   = .FALSE.
+IWAVPR  = 11
+
+########-------- Step: NVT-MD --------########
+ENCUT   = 390
+EDIFF   = 1E-4
+ALGO    = Normal
+IALGO   = 48
+MAXMIX  = 40
+IBRION  = 0
+NSW     = 1000
+NBLOCK  = 1
+KBLOCK  = 10
+POTIM   = 2
+ISYM    = 0
+
+# NVT ensemble
+ISIF    = 2
+SMASS   = 2
+MDALGO  = 2
+TEBEG   = 1000
+
+LREAL   = False
+NELMIN  = 4
+PREC    = Normal
+ISTART  = 0
+ISMEAR  = 2
+SIGMA   = 0.2
+
+NPAR    = 4
+NCORE   = 1
+NSIM    = 4
+NWRITE  = 0
+
+LCHARG  = .FALSE.
+LPLANE  = .TRUE.
+LWAVE   = .FALSE.
+IWAVPR  = 11
