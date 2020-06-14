@@ -28,6 +28,6 @@ High efficiency;
 Automated flow of the SOECs calculation;
 The choice of three kinds of strain-matrix sets: the OHESS, ASESS, and ULICS;
 
-Zero-temperature SOECs;
+Zero-temperature SOECs; and
 
-High-temperature and/or high-pressure SOECs;
+High-temperature and/or high-pressure SOECs.
