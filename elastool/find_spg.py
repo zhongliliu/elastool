@@ -43,7 +43,7 @@ def find_crystal_system(pos_conv, dimensional):
         # The 2D lattice system is defined according to 2D Mater. 6 (2019) 048001
         if c > a and c > b:
             if abs(a - b) <= dist_acc:
-                if abs(gamma - 120) <= angl_acc:
+                if abs(gamma - 120) <= angl_acc or abs(gamma - 60) <= angl_acc: # Trigonal crystals will obey the latter
                     latt_system = 'isotropy'
                 elif abs(gamma - 90) <= angl_acc:
                     latt_system = 'tetragonal'
