@@ -16,6 +16,7 @@ https://arxiv.org/abs/2005.04331
 [1] Z. L. Liu. High-efficiency calculation of elastic constants enhanced by the optimized strain-matrix sets (arxiv:2002.00005). 2020.
 
 [2] R. Yu, J. Zhu, and H. Q. Ye. Calculations of single-crystal elastic constants made simple. Comput. Phys. Commun., 181:671, 2010.
+
 [3] C.E. Ekuma and L. Liu. Mechanical properties and hardness of boron pnicogens BX (X = N, P, As). Materialia 14, 100904 (2020) https://doi.org/10.1016/j.mtla.2020.100904 
 
 2. Key Features
