@@ -14,22 +14,34 @@
   E-mail: zl.liu@163.com
 """
 from ase.io import vasp
+from math import pi
 
 
 def sound_velocity(elastic_constants_dict, cwd):
     try:
         pos = vasp.read_vasp('%s/OPT/CONTCAR'%cwd)
-        volume = pos.get_volume()/0.529177**3.0
+        # The Planck's constant in m^2 Kg s^-1
+        h = 6.626E-34
+        # The Boltzmann constant in m^2 Kg s^-2 K-1
+        k = 1.381E-23
+        # The Avogadro's Constant
+        Na = 6.02E+23
+        # The number of atoms in the supercell (molecule)
+        n = pos.get_global_number_of_atoms()
+        # The total volume of the supercell (molecule)
+        volume = pos.get_volume()
+        # The total mass of all atoms in the supercell (molecule), in AMU
         M = sum(pos.get_masses())
+        # The density in Kg/m^3
+        rho = M*1E-3/Na/volume/1E-30
+
         B = elastic_constants_dict['B_vrh']
         G = elastic_constants_dict['G_vrh']
-
-        V_s = 0.001*G**0.5*(10**9/(M*10**(-3)/volume/(0.529177*10**(-10))**3/(6.02*10**23)))**0.5
-        V_b = 0.001*B**0.5*(10**9/(M*10**(-3)/volume/(0.529177*10**(-10))**3/(6.02*10**23)))**0.5
-        V_p = 0.001*(B+4.*G/3.)**0.5*(10**9/(M*10**(-3)/volume/(0.529177*10**(-10))**3/(6.02*10**23)))**0.5
-        V_m = ((2./V_s**3.+1/V_p**3)/3.)**(-1./3.)
-
-        T_D = (6.626*10**(-34)/(1.381*10**(-23)))*(3./(volume*(.529177*10**(-10))**3.)/4./3.1415926)**(1./3.)*V_m*1000
+        V_s = 1E-3*G**0.5*(1E+9/(M*1E-3/volume/1E-30/(6.02E+23)))**0.5
+        V_b = 1E-3*B**0.5*(1E+9/(M*1E-3/volume/1E-30/(6.02E+23)))**0.5
+        V_p = 1E-3*(B+4.*G/3.)**0.5*(1E+9/(M*1E-3/volume/1E-30/(6.02E+23)))**0.5
+        V_m = ((2./V_s**3.+1./V_p**3)/3.)**(-1./3.)
+        T_D = h/k*(3.*n/4./pi*Na*rho/M/1E-3)**(1./3.)*V_m*1E+3
 
         elastic_constants_dict['V_s'] = V_s
         elastic_constants_dict['V_b'] = V_b
@@ -40,4 +52,10 @@ def sound_velocity(elastic_constants_dict, cwd):
         pass
 
     return elastic_constants_dict
-    
+
+
+if __name__ == '__main__':
+    elastic_constants_dict = {'B_vrh': 34.99, 'G_vrh': 17.20}
+    cwd = '.'
+    elastic_constants_dict= sound_velocity(elastic_constants_dict, cwd)
+    print(elastic_constants_dict)
