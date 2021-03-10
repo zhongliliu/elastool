@@ -23,7 +23,6 @@ https://arxiv.org/abs/2005.04331
 
 The ElasTool toolkit has many features including
 
-http://www.matdesign.cn/
 
 Very easy to use (installation and run);
 
@@ -35,3 +34,5 @@ The choice of three kinds of strain-matrix sets: the OHESS, ASESS, and ULICS;
 Zero-temperature SOECs; and
 
 High-temperature and/or high-pressure SOECs.
+
+http://www.matdesign.cn/
