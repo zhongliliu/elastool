@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 from datetime import datetime
 from os import getcwd, mkdir, chdir
 from os.path import isdir, isfile
@@ -18,7 +17,8 @@ from ase.io import vasp
 from equilibrium_md import equil_md
 from stability_criteria import criteria
 from sound_velocity import sound_velocity
-
+import warnings
+warnings.filterwarnings('ignore')
 
 mean_press = 0
 stress_set_dict = {}
@@ -134,9 +134,7 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
     print("Fitting the first-order function to the collected \nstress-strain data according to Hooke's law...")
     elastic_constants_dict = {}
     elastic_constants_dict = calc_elastic_constants(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict)
-
-    if dimensional == '3D':
-        elastic_constants_dict = sound_velocity(elastic_constants_dict, cwd)
+    elastic_constants_dict = sound_velocity(elastic_constants_dict, cwd, dimensional)
 
 
     longdash = '-'*48
@@ -197,7 +195,30 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
                     ec_file.write("|%s = %s|\n" % (key.upper(), (str("%.2f" % elastic_constants_dict[key])+" K").ljust(42)))
 
             elif dimensional == '2D':
-                ec_file.write("|%s = %.2f N/m\n" % (key.capitalize(), elastic_constants_dict[key]))
+                if key[0] == 'c':
+                    if not has_print_ec:
+                        ec_file.write("|%s|\n" % longdash)
+                        ec_file.write("%s|\n" %("|Elastic constants:").ljust(49))
+                        has_print_ec = True
+                    ec_file.write("|%s = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" N/m").ljust(42)))
+                elif key[0] == 'Y':
+                    ec_file.write("|Young's modulus (%s) = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" N/m").ljust(23)))
+                elif key[0] == 'v':
+                    ec_file.write("|Possion's ratio (%s) = %s|\n" % ('v', (str("%.2f" % elastic_constants_dict[key])).ljust(26)))
+                elif key[0] == 'B':
+                    ec_file.write("|Bulk modulus (%s) = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" N/m").ljust(29)))
+                elif key[0] == 'G':
+                    ec_file.write("|Shear modulus (%s) = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" N/m").ljust(28)))
+                elif key[0] == 'V':
+                    if not has_print_sound:
+                        ec_file.write("|%s|\n" % longdash)
+                        ec_file.write("%s|\n" %("|Sound velocity:").ljust(49))
+                        has_print_sound = True
+                    ec_file.write("|%s = %s|\n" % (key.upper(), (str("%.2f" % elastic_constants_dict[key])+" Km/s").ljust(42)))
+                elif key[0] == 'T':
+                    ec_file.write("|%s|\n" % longdash)
+                    ec_file.write("%s|\n" %("|Debye temperature:").ljust(49))
+                    ec_file.write("|%s = %s|\n" % (key.upper(), (str("%.2f" % elastic_constants_dict[key])+" K").ljust(42)))
 
         if print_anisotropy:
             ec_file.write("|%s|\n" % longdash)
