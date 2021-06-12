@@ -1,5 +1,9 @@
 ElasTool is an automated Python-based toolkit for calculating the second-order elastic constants (SOECs) of any crystal systems belonging to two- or three-dimension. It utilizes three kinds of strain-matrix sets, the high-efficiency strain-matrix sets (OHESS) [1], the universal linear-independent coupling strains (ULICS) [2] and the all-single-element strain-matrix sets (ASESS) [1] to automatically calculate the SOECs. Elastool is very flexible and has the capability of accurately determining the elastic constant and mechanical properties of materials at both zero-temperature and/or finite temperature and pressure. 
 
+To install ElasTool, please, see the detailed explanation in the INSTALL file.
+
+To run Elastool, please, follow any of the examples given in the example folder. 
+
 Presently, ElasTool interfaces to VASP electronic structure code. But the interfaces to other DFT packages can also be easily implemented. If you're interested in extending ElasTool to other electronic structure codes, please email the authors if you need assistance on the desciption of ElasTool source code.
 
 1. About ElasTool
