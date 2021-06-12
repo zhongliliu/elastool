@@ -1,7 +1,7 @@
 
 This is the ElasTool software & test suite
 
- * COPYRIGHT: the license of under which MUSE can be distributed
+ * COPYRIGHT: the license of under which ElasTool can be distributed
  * README: This file
  * doc: Users' Manual
  * src: The source code; please see also the file 'INSTALL'
@@ -11,7 +11,6 @@ This is the ElasTool software & test suite
 
 Bugs and suggestions can be sent to zl.liu@163.com or cekuma1@gmail.com.
 
-If you find something interesting that will be published, please cite MUSE as,
+If you find something interesting that will be published, please cite ElasTool as,
 
-Zhong-Li Liu, High-efficiency calculation of elastic constants enhanced by the
-optimized strain-matrix sets.
+Zhong-Li Liu and Chinedu Ekuma, ElasTool: An automated Python-based toolkit for calculating elastic constants. 
