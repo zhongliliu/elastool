@@ -1,7 +1,7 @@
 """
   Elastool -- Elastic toolkit for finite-temperature elastic constants calculations
 
-  Copyright (C) 2019-2020 by Zhong-Li Liu
+  Copyright (C) 2019-2021 by Zhong-Li Liu and Chinedu Ekuma
 
   This program is free software; you can redistribute it and/or modify it under the
   terms of the GNU General Public License as published by the Free Software Foundation
@@ -43,8 +43,8 @@ def find_crystal_system(pos_conv, dimensional):
         # The 2D lattice system is defined according to 2D Mater. 6 (2019) 048001
         if c > a and c > b:
             if abs(a - b) <= dist_acc:
-                if abs(gamma - 120) <= angl_acc or abs(gamma - 60) <= angl_acc: # Trigonal crystals will obey the latter
-                    latt_system = 'isotropy'
+                if abs(gamma - 120) <= angl_acc or abs(gamma - 60) <= angl_acc: #The last part is for some 2D systems
+                    latt_system = 'isotropy' #This is 2D Hexagonal system
                 elif abs(gamma - 90) <= angl_acc:
                     latt_system = 'tetragonal'
             else:
@@ -78,4 +78,3 @@ def find_crystal_system(pos_conv, dimensional):
                 break
 
     return latt_system
-    
