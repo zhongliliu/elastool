@@ -204,7 +204,7 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
                 elif key[0] == 'Y':
                     ec_file.write("|Young's modulus (%s) = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" N/m").ljust(23)))
                 elif key[0] == 'v':
-                    ec_file.write("|Possion's ratio (%s) = %s|\n" % ('v', (str("%.2f" % elastic_constants_dict[key])).ljust(26)))
+                    ec_file.write("|Possion's ratio (%s) = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])).ljust(26)))
                 elif key[0] == 'B':
                     ec_file.write("|Bulk modulus (%s) = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" N/m").ljust(29)))
                 elif key[0] == 'G':
