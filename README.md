@@ -1,42 +1,37 @@
-ElasTool is an automated Python-based toolkit for calculating the second-order elastic constants (SOECs) of any crystal systems belonging to two- or three-dimension. It utilizes three kinds of strain-matrix sets, the high-efficiency strain-matrix sets (OHESS) [1], the universal linear-independent coupling strains (ULICS) [2] and the all-single-element strain-matrix sets (ASESS) [1] to automatically calculate the SOECs. Elastool is very flexible and has the capability of accurately determining the elastic constant and mechanical properties of materials at both zero-temperature and/or finite temperature and pressure. 
+# ElasTool: An Automated Toolkit for Elastic Constant Calculations 
 
-To install ElasTool, please, see the detailed explanation in the INSTALL file.
+**ElasTool** is an innovative Python-based toolkit specifically designed for computing the second-order elastic constants (SOECs) of crystal systems in both two- and three-dimensional structures. The software uses three kinds of strain-matrix sets: High-Efficiency Strain-Matrix Sets (OHESS) [1], Universal Linear-Independent Coupling Strains (ULICS) [2], and All-Single-Element Strain-Matrix Sets (ASESS) [1]. This variety allows for automatic and efficient calculation of the SOECs. 
 
-To run Elastool, please, follow any of the examples given in the example folder. 
+ElasTool offers a flexible approach to determining elastic constants and mechanical properties of various materials at zero and finite temperatures and pressures, providing a broad scope of utility across different material conditions. 
 
-Presently, ElasTool interfaces to VASP electronic structure code. But the interfaces to other DFT packages can also be easily implemented. If you're interested in extending ElasTool to other electronic structure codes, please email the authors if you need assistance on the desciption of ElasTool source code.
+Currently, ElasTool integrates seamlessly with the VASP electronic structure code. However, its architecture is open to further expansions and can easily implement interfaces to other DFT packages. If you are interested in such extensions, don't hesitate to contact the authors for further guidance and support with the ElasTool source code.
 
-1. About ElasTool
+## Installation 
 
-https://arxiv.org/abs/2002.06535
+For detailed instructions on how to install ElasTool, please refer to the `INSTALL` file in the repository. 
 
-https://arxiv.org/abs/2002.00005
+## Usage 
 
-High-pressure elastic constants example:
+To learn how to run ElasTool, kindly refer to the examples provided in the `example` folder. 
 
-https://arxiv.org/abs/2005.04331
+## Relevant Literature
 
+1. For more information about ElasTool, please see the following articles:
 
-[1] Z. L. Liu. High-efficiency calculation of elastic constants enhanced by the optimized strain-matrix sets (arxiv:2002.00005). 2020.
+    * [ElasTool: An automated toolkit for elastic constants calculation](https://www.sciencedirect.com/science/article/abs/pii/S0010465521002927) - Z.-L. Liu, C.E. Ekuma, W.-Q. Li, J.-Q. Yang, and X.-J. Li, Computer Physics Communications *270*, 108180, 2022.
+       
+    * [Calculations of single-crystal elastic constants made simple](https://arxiv.org/abs/2002.06535) - R. Yu, J. Zhu, and H. Q. Ye. Comput. Phys. Commun., 181:671, 2010.
+    
+    * [Mechanical properties and hardness of boron pnicogens BX (X = N, P, As)](https://doi.org/10.1016/j.mtla.2020.100904) - C.E. Ekuma and Z. L. Liu. Materialia 14, 100904 (2020). 
 
-[2] R. Yu, J. Zhu, and H. Q. Ye. Calculations of single-crystal elastic constants made simple. Comput. Phys. Commun., 181:671, 2010.
+3. For an example of high-pressure elastic constants calculation using ElasTool, refer to the article [here](https://arxiv.org/abs/2005.04331).
 
-[3] C.E. Ekuma and Z. L. Liu. Mechanical properties and hardness of boron pnicogens BX (X = N, P, As). Materialia 14, 100904 (2020) https://doi.org/10.1016/j.mtla.2020.100904 
+## Key Features
 
-2. Key Features
+ElasTool offers an array of robust features that makes it a comprehensive toolkit for computing SOECs:
 
-The ElasTool toolkit has many features including
-
-
-Very easy to use (installation and run);
-
-High efficiency;
-
-Automated flow of the SOECs calculation;
-The choice of three kinds of strain-matrix sets: the OHESS, ASESS, and ULICS;
-
-Zero-temperature SOECs; and
-
-High-temperature and/or high-pressure SOECs.
-
-http://www.matdesign.cn/
+* User-friendly installation and operation process
+* High-efficiency calculations 
+* Automated workflow for SOECs calculation
+* A choice between three kinds of strain-matrix sets: OHESS, ASESS, and ULICS
+* Capability for both zero-temperature SOECs and high-temperature and/or high-pressure SOECs calculations.
