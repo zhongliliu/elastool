@@ -1,0 +1,65 @@
+Installation Guide:
+
+The following packages are required:
+1. Python 3.5 or later.
+2. NumPy.
+3. Spglib.
+4. ASE.
+5. Pandas
+
+The above libraries can be installed with either pip or conda. If you do not have pip or conda installed already in your system, they can be installed easily using the following commands on a Linux environment.
+
+------
+Conda:
+------
+To install the full Anaconda distribution: issue the command: conda install anaconda. If you prefer, you can download your system specific type directly from the Anaconda website and follow the instructions therein at https://docs.anaconda.com/anaconda/install. If you prefer the minimal installation of Conda, please take a look at miniconda at the website: https://docs.conda.io/en/latest/miniconda.html
+
+
+Pip: To install pip, you need to use a combination of curl and python. For example:
+
+-------------------------------------
+In a centos system, do the following:
+-------------------------------------
+(a) Download pip with: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+(b) Install pip with: sudo python get-pip.py
+(c) Verify the version with: pip -V
+
+----------------------------------------------------------------------------
+For Ubuntu system, since we will use Python3 for Elastool, do the following:
+----------------------------------------------------------------------------
+(a) First, update your repository with: sudo apt update
+(b) Install pip with: sudo apt install python3-pip
+(c) Verify the version: pip3 --version
+(d) You can upgrade to the latest version with: sudo pip3 install --upgrade pip
+
+
+
+--------------------------------------
+To install Python 3, do the following:
+--------------------------------------
+
+Method 1:
+(a) conda update anaconda
+(b) conda install python=3.XX (XX is the version of the Python3, e.g., Python3.5)
+
+Method 2: This method is ff you still use Python 2:
+(a) conda update anaconda
+(b) conda create --name py3 python=3.XXX
+(c) conda activate py3 to activate Python3
+(d) conda deactivate to deactivate an active environment
+
+-------------------------------------------------
+To install the other libraries, do the following:
+-------------------------------------------------
+
+NumPy:  conda install -c anaconda numpy
+Spglib: conda install -c conda-forge spglib
+ASE:    conda install -c conda-forge ase
+Pandas: conda install pandas. If you want to specify a particular version, use for example conda install pandas=0.20.3
+
+
+
+After installing the above libraries, in the main directory, execute,
+python setup.py install [--prefix=/path/to/install/]
+
+The "--prefix" without the quotes could be needed if you're running on a shared HPC where you might not have admin privileges.

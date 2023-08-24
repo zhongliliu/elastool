@@ -1,7 +1,7 @@
 """
-  Elastool -- Elastic toolkit for finite-temperature elastic constants calculations
+  Elastool -- Elastic toolkit for zero and finite-temperature elastic constants and mechanical properties calculations
 
-  Copyright (C) 2019-2021 by Zhong-Li Liu and Chinedu Ekuma
+  Copyright (C) 2019-2024 by Zhong-Li Liu and Chinedu Ekuma
 
   This program is free software; you can redistribute it and/or modify it under the
   terms of the GNU General Public License as published by the Free Software Foundation
@@ -11,9 +11,9 @@
   WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
   PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-  E-mail: zl.liu@163.com
+  E-mail: zl.liu@163.com, cekuma1@gmail.com
+
 """
-from spglib import spglib
 from read_input import indict
 
 
@@ -29,22 +29,46 @@ def findspg(atoms):
     return spg
 
 
-def find_crystal_system(pos_conv, dimensional):
-    if dimensional == '2D':
+def find_crystal_system(pos_conv, dimensional,tubestrain_type):
+    if dimensional == '1D':
+        #        latt_system = 'any1D'
+
+        dist_acc = 0.1
+        lenth_angl = pos_conv.get_cell_lengths_and_angles()
+        a = lenth_angl[0]
+        b = lenth_angl[1]
+        c = lenth_angl[2]
+#        print('These are the lattice constants   ', a, b, c)
+        # The 1D lattice system is defined according to their spatial
+        # configuration
+        if tubestrain_type == "Longitudinal":
+            latt_system = 'any1D'  # This is 1D embedded in 3D space
+        elif tubestrain_type == "Generalized":
+            latt_system = 'Nanotube'  # This is 1D embedded in 3D space
+        else:
+            print('ERROR: Define appropriate nanotube structure!!!\n')
+            #latt_system = 'any1D'  # This is a "pure" 1D system
+
+    elif dimensional == '2D':
         dist_acc = 0.1
         angl_acc = 0.5
-        
+
         lenth_angl = pos_conv.get_cell_lengths_and_angles()
         a = lenth_angl[0]
         b = lenth_angl[1]
         c = lenth_angl[2]
         gamma = lenth_angl[5]
 
-        # The 2D lattice system is defined according to 2D Mater. 6 (2019) 048001
+        # The 2D lattice system is defined according to 2D Mater. 6 (2019)
+        # 048001
         if c > a and c > b:
             if abs(a - b) <= dist_acc:
-                if abs(gamma - 120) <= angl_acc or abs(gamma - 60) <= angl_acc: #The last part is for some 2D systems
-                    latt_system = 'isotropy' #This is 2D Hexagonal system
+                if abs(
+                        gamma -
+                        120) <= angl_acc or abs(
+                        gamma -
+                        60) <= angl_acc:  # The last part is for some 2D systems
+                    latt_system = 'isotropy'  # This is 2D Hexagonal system
                 elif abs(gamma - 90) <= angl_acc:
                     latt_system = 'tetragonal'
             else:
@@ -61,17 +85,17 @@ def find_crystal_system(pos_conv, dimensional):
         spg = findspg(pos_conv)
         spg_num = spg[1]
         crystal_system = [
-                [2, "Triclinic"],
-                [15, "Monoclinic"],
-                [74, "Orthorombic"],
-                [88, "Tetragonal2"],
-                [142, "Tetragonal1"],
-                [148, "Trigonal2"],
-                [167, "Trigonal1"],
-                [194, "Hexagonal"],
-                [230, "Cubic"]
-            ]
-        
+            [2, "Triclinic"],
+            [15, "Monoclinic"],
+            [74, "Orthorombic"],
+            [88, "Tetragonal2"],
+            [142, "Tetragonal1"],
+            [148, "Trigonal2"],
+            [167, "Trigonal1"],
+            [194, "Hexagonal"],
+            [230, "Cubic"]
+        ]
+
         for l in crystal_system:
             if spg_num <= l[0]:
                 latt_system = l[1]

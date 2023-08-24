@@ -1,0 +1,9 @@
+Metadata-Version: 2.1
+Name: elastool
+Version: 1.0.2
+Summary: Elastic tool for zero and finite-temperature elastic constants and mechanical properties calculations
+Home-page: https://sourceforge.net/projects/elastool/
+Author: Zhong-Li Liu and Chinedu Ekuma
+Author-email: cekuma1@gmail.com
+License: GNU GPL version 3
+License-File: LICENSE

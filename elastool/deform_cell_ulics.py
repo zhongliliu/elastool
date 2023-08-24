@@ -1,7 +1,7 @@
 """
-  Elastool -- Elastic toolkit for finite-temperature elastic constants calculations
+  Elastool -- Elastic toolkit for zero and finite-temperature elastic constants and mechanical properties calculations
 
-  Copyright (C) 2019-2019 by Zhong-Li Liu
+  Copyright (C) 2019-2024 by Zhong-Li Liu and Chinedu Ekuma
 
   This program is free software; you can redistribute it and/or modify it under the
   terms of the GNU General Public License as published by the Free Software Foundation
@@ -11,7 +11,8 @@
   WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
   PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-  E-mail: zl.liu@163.com
+  E-mail: zl.liu@163.com, cekuma1@gmail.com
+
 """
 from numpy import identity, dot
 from read_input import indict
@@ -125,8 +126,15 @@ def deform_cell_ulics(latt_system, cell, up):
             for deform_matrix in deform_matrix_list:
                 deformed_cell = dot(cell, deform_matrix)
                 deformed_cell_list.append(deformed_cell)
+
         else:
             print('Crystal system is not parsed correctly!!!')
             exit(1)
+
+    elif indict['dimensional'][0] == '1D':
+        if latt_system == 'any1D' or latt_system == 'true1D' or latt_system == 'Nanotube':
+            deform_matrix = identity_matrix + strain_matrix(latt_system, up)[0]
+            deformed_cell = dot(cell, deform_matrix)
+            deformed_cell_list.append(deformed_cell)
             
     return deformed_cell_list

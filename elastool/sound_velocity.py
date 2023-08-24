@@ -1,7 +1,7 @@
 """
-  Elastool -- Elastic toolkit for finite-temperature elastic constants calculations
+  Elastool -- Elastic toolkit for zero and finite-temperature elastic constants and mechanical properties calculations
 
-  Copyright (C) 2019-2021 by Zhong-Li Liu and Chinedu Ekuma
+  Copyright (C) 2019-2024 by Zhong-Li Liu and Chinedu Ekuma
 
   This program is free software; you can redistribute it and/or modify it under the
   terms of the GNU General Public License as published by the Free Software Foundation
@@ -11,47 +11,53 @@
   WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
   PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-  E-mail: zl.liu@163.com
-"""
-from ase.io import vasp
-from math import pi,sqrt
-from numpy import cross,linalg
+  E-mail: zl.liu@163.com, cekuma1@gmail.com
 
-def sound_velocity(elastic_constants_dict, cwd, dimensional):
-    pos = vasp.read_vasp('%s/OPT/CONTCAR'%cwd)
+"""
+
+from ase.io import vasp
+from math import pi, sqrt
+from numpy import cross, linalg
+
+
+def sound_velocity(elastic_constants_dict, cwd, dimensional, latt_system):
+    pos = vasp.read_vasp('%s/OPT/CONTCAR' % cwd)
     # The Planck's constant in m^2 Kg s^-1
     h = 6.626E-34
     # The reduced Planck's constant hbar in m^2 Kg s^-1
     hbar = 1.0546E-34
     # The Boltzmann constant in m^2 Kg s^-2 K-1
     k = 1.381E-23
-    # The Avogadro's Constant
+    # The Avogadro's constant
     Na = 6.02E+23
-    # The total volume of the supercell (molecule)
+    # The total volume of the system cell 
     volume = pos.get_volume()
-    # The total mass of all atoms in the supercell (molecule), in AMU
+    # The total mass of all atoms in the material, in AMU
     M = sum(pos.get_masses())
-    # The number of atoms in the supercell (molecule)
+    # The number of atoms in the system (material)
     n = pos.get_global_number_of_atoms()
     if dimensional == '3D':
         try:
             # The density in Kg/m^3
-            rho = M*1E-3/Na/volume/1E-30
+            rho = M * 1E-3 / Na / volume / 1E-30
 
             B = elastic_constants_dict['B_vrh']
             G = elastic_constants_dict['G_vrh']
-            V_s = 1E-3*G**0.5*(1E+9/(M*1E-3/volume/1E-30/(6.02E+23)))**0.5
-            V_b = 1E-3*B**0.5*(1E+9/(M*1E-3/volume/1E-30/(6.02E+23)))**0.5
-            V_p = 1E-3*(B+4.*G/3.)**0.5*(1E+9/(M*1E-3/volume/1E-30/(6.02E+23)))**0.5
-            V_m = ((2./V_s**3.+1./V_p**3)/3.)**(-1./3.)
-            T_D = h/k*(3.*n/4./pi*Na*rho/M/1E-3)**(1./3.)*V_m*1E+3
+            V_s = 1E-3 * G**0.5 * \
+                (1E+9 / (M * 1E-3 / volume / 1E-30 / (6.02E+23)))**0.5
+            V_b = 1E-3 * B**0.5 * \
+                (1E+9 / (M * 1E-3 / volume / 1E-30 / (6.02E+23)))**0.5
+            V_p = 1E-3 * (B + 4. * G / 3.)**0.5 * (1E+9 / \
+                          (M * 1E-3 / volume / 1E-30 / (6.02E+23)))**0.5
+            V_m = ((2. / V_s**3. + 1. / V_p**3) / 3.)**(-1. / 3.)
+            T_D = (h / k) * (3. * n / 4. / pi * Na * rho / M / 1E-3)**(1. / 3.) * V_m * 1E+3
 
             elastic_constants_dict['V_s'] = V_s
             elastic_constants_dict['V_b'] = V_b
             elastic_constants_dict['V_p'] = V_p
             elastic_constants_dict['V_m'] = V_m
             elastic_constants_dict['T_D'] = T_D
-        except:
+        except BaseException:
             pass
     elif dimensional == '2D':
         c11 = elastic_constants_dict['c11']
@@ -61,42 +67,46 @@ def sound_velocity(elastic_constants_dict, cwd, dimensional):
             c22 = elastic_constants_dict['c22']
 #            cii = (c11+c22)/2.0
         else:
-            c22 = elastic_constants_dict['c11'] #Lattice a=b
+            c22 = elastic_constants_dict['c11']  # Lattice a=b
 
         # Thomas et al., RSC Adv., 2018, 8, 27283
-        Y_2Da = (c11*c22-c12**2)/c11 
-        Y_2Db = (c11*c22-c12**2)/c22
-        v_a = c12/c11
-        v_b = c12/c22
+        Y_2Da = (c11 * c22 - c12**2) / c11
+        Y_2Db = (c11 * c22 - c12**2) / c22
+        v_a = c12 / c11
+        v_b = c12 / c22
 
-        #PRB 94, 245420 (2016)
-        # Calculate sound velocities in km/s
-        #Note B is the in-plane stiffness (2D analogy of the bulk modulus)
-        B_a = Y_2Da/2.0/(1-v_a) 
-        G_a = Y_2Da/2.0/(1+v_a)  #Note you can use (C_ii-C_ij)/2
-        B_b = Y_2Db/2.0/(1-v_b)
-        G_b = Y_2Db/2.0/(1+v_b)  #Note you can use (C_ii-C_ij)/2        cell = pos.get_cell()
+        # Note B is the in-plane stiffness (2D analogy of the bulk modulus)
+        B_a = Y_2Da / 2.0 / (1 - v_a)
+        G_a = Y_2Da / 2.0 / (1 + v_a)  # Note you can use (C_ii-C_ij)/2
+        B_b = Y_2Db / 2.0 / (1 - v_b)
+        # Note you can use (C_ii-C_ij)/2        cell = pos.get_cell()
+        G_b = Y_2Db / 2.0 / (1 + v_b)
 
 #        print(B_a,G_a,B_b,G_b)
 
+        # PRB 94, 245420 (2016)
+        # Calculate sound velocities in km/s
+
         cell = pos.get_cell()
         # The 2D density in Kg/m^2
-        area = linalg.norm(cross(cell[0],cell[1]))
-        rho_2D = M*1E-3/Na/area/1E-20
+        area = linalg.norm(cross(cell[0], cell[1]))
+        rho_2D = M * 1E-3 / Na / area / 1E-20
 #        print(rho_2D)
 #        print(Y_2D)
 
-        V_la = 1E-3*sqrt(abs(B_a+G_a)/rho_2D)   #1E-3*sqrt(Y_2D*(1-v)/rho_2D/(1+v)/(1-2*v))
-        V_sa = 1E-3*sqrt(abs(G_a)/rho_2D)
+        # 1E-3*sqrt(Y_2D*(1-v)/rho_2D/(1+v)/(1-2*v))
+        V_la = 1E-3 * sqrt(abs(B_a + G_a) / rho_2D)
+        V_sa = 1E-3 * sqrt(abs(G_a) / rho_2D)
 
-        V_lb = 1E-3*sqrt(abs(B_b+G_b)/rho_2D)   #1E-3*sqrt(Y_2D*(1-v)/rho_2D/(1+v)/(1-2*v))
-        V_sb = 1E-3*sqrt(abs(G_b)/rho_2D)
+        # 1E-3*sqrt(Y_2D*(1-v_b)/rho_2D/(1+v_b)/(1-2*v_b)) 
+        V_lb = 1E-3 * sqrt(abs(B_b + G_b) / rho_2D)
+        V_sb = 1E-3 * sqrt(abs(G_b) / rho_2D)
 
-        V_ma = (1.0/2.0*(2.0/V_sa**2.0+1/V_la**2.0))**(-1.0/2.0)
-        T_Da = hbar/k*(4.*pi*n/area/1E-20)**(1./2.)*V_ma*1E+3
+        V_ma = (1.0 / 2.0 * (1.0 / V_sa**2.0 + 1 / V_la**2.0))**(-1.0 / 2.0) #(1.0 / 3.0 * (2.0 / V_sa**3.0 + 1 / V_la**3.0))**(-1.0 / 3.0)
+        T_Da = (hbar / k) * (4. * pi * n / area / 1E-20)**(1. / 2.) * V_ma * 1E+3
 
-        V_mb = (1.0/2.0*(2.0/V_sb**2.0+1/V_lb**2.0))**(-1.0/2.0)
-        T_Db = hbar/k*(4.*pi*n/area/1E-20)**(1./2.)*V_mb*1E+3
+        V_mb = (1.0 / 2.0 * (1.0 / V_sb**2.0 + 1 / V_lb**2.0))**(-1.0 / 2.0)
+        T_Db = (hbar / k) * (4. * pi * n / area / 1E-20)**(1. / 2.) * V_mb * 1E+3
 
         elastic_constants_dict['V_la'] = V_la
         elastic_constants_dict['V_lb'] = V_lb
@@ -115,11 +125,94 @@ def sound_velocity(elastic_constants_dict, cwd, dimensional):
         elastic_constants_dict['B_a'] = B_a
         elastic_constants_dict['B_b'] = B_b
 
+    elif dimensional == '1D':
+        cell = pos.get_cell()
+        # The 1D density in Kg/m
+        # Assuming the 1D structure is oriented along cell[2]
+        length = linalg.norm(cell[2])#/1E-10
+        rho_1D = M * 1E-3 / Na / length  / 1E-10
+        mass_density = M * 1E-3 / Na / volume / 1E-30 # kg/m^3
+
+       # M = pos.get_masses().mean()  # Mean atomic mass in the unit cell
+       # n = len(pos)  # Number of atoms in the unit cell
+       # Na = 6.02214076E+23  # Avogadro's number
+ 
+        if latt_system == 'any1D':
+            c33 = elastic_constants_dict['c33']
+            c23 = elastic_constants_dict['c23']
+            Y = c33 - c23 * c23 / c33
+            v = c23 / c33
+            V = 1E-3* sqrt(abs(c33*1E+9) / mass_density)
+            #T_D =(h / k) * (n * Na * rho_1D/2 / M / 1E-3) * V * 1E+3
+            T_D = (h / k) * (3. * n / 4. / pi * Na * mass_density / M / 1E-3)**(1. / 3.) * V * 1E+3 # We have to use the 3D Debye temperatue formula! For true 1D, T_D = hbar/K_B(\pi*N/L)*V
+            R_f = 0.56 * sqrt(abs(c33) * 1E+9 / mass_density) / (2 * pi * length* 1E-10 ) # Resonance frequency. The 0.56 factor is a correction factor that arises for a cantilever with a fixed end and a free end.
+
+            elastic_constants_dict['Y'] = Y
+            elastic_constants_dict['v'] = v
+            elastic_constants_dict['V'] = V
+            elastic_constants_dict['T_D'] = T_D
+            elastic_constants_dict['R_f'] = R_f
+        elif latt_system == 'true1D':
+
+            # Here you should add calculations for 'true1D'
+            # I'm setting 'Y' and 'v' as None since you did not specify how to
+            # calculate them
+            c11 = elastic_constants_dict['c11']
+            #print('This is c11  ', rho_1D)
+            V_s = 1E-3 * sqrt(abs(c11) / rho_1D)
+            T_D = hbar / k * (2. * pi * n / length / 1E-10) * V_s * 1E+3
+            R_f = 1. / (2. * pi) * sqrt(abs(c11) / M /
+                                        1E-3)  # Resonance frequency
+            c = 1. / c11
+            elastic_constants_dict['Y'] = c11
+           # elastic_constants_dict['v'] = v
+            elastic_constants_dict['V_s'] = V_s
+            elastic_constants_dict['T_D'] = T_D
+            elastic_constants_dict['C'] = c
+            elastic_constants_dict['R'] = R_f
+
+        elif latt_system == 'Nanotube':
+            c33 = elastic_constants_dict['c33']
+            c22 = elastic_constants_dict['c22']
+            c23 = elastic_constants_dict['c23']
+            #print('This is c22  ', c22,c33,c23)
+            #print('This is rho_1D  ', mass_density)
+            V_l = 1E-3* sqrt(abs(c33*1E+9) / mass_density)
+            V_t = 1E-3 * sqrt(abs(c23*1E+9) / mass_density)
+            V_a = sqrt(abs(V_l * V_t))
+            #T_D = hbar *(3.*pi**2 * mass_density)/(volume*k)**(1/3.) * (V_l*V_t)**(2/3.) *1E+3
+            T_D = (h / k) * (3. * n / 4. / pi * Na * mass_density / M / 1E-3)**(1. / 3.) * V_a * 1E+3 #hbar / k * ( n * Na * mass_density / M / 1E-3)**(1. / 3.) * V_a * 1E+3
+
+            T_D_l = (h / k) * (3. * n / 4. / pi * Na * mass_density / M / 1E-3)**(1. / 3.)  * V_l* 1E+3
+
+            T_D_t = (h / k) * (3. * n / 4. / pi * Na * mass_density / M / 1E-3)**(1. / 3.) * V_t* 1E+3
+
+            R_f_t = 0.56 * sqrt(abs(c22) * 1E+9 / mass_density) / (2 * pi * length* 1E-10 )
+            R_f_l = 0.56 * sqrt(abs(c33) * 1E+9 / mass_density) / (2 * pi * length* 1E-10 ) # Resonance frequency. The 0.56 factor is a correction factor that arises for a cantilever with a fixed end and a free end.
+            c_t = 1. / c22
+            c_l = 1. / c33
+            v = (c33 - 2*c22) / (2 * (c33 - c22)) #c23 / c33 #c23 can be negative
+            elastic_constants_dict['Y_Ldnal'] = c33 #- c23 * c23 / c33
+            elastic_constants_dict['Y_Circum'] = c22
+            elastic_constants_dict['B'] = (c33 + 2 * c22) / 3. # Bulk modulus
+            elastic_constants_dict['G_L'] = (c33)/2. #Longitudinal Shear modulus
+            elastic_constants_dict['G_C'] = (c22)/2. #Circumferential Shear modulus
+            elastic_constants_dict['G_cs'] = c23 #Coupled Shear modulus
+            elastic_constants_dict['v'] = v
+            elastic_constants_dict['V_t'] = V_t
+            elastic_constants_dict['V_l'] = V_l
+            elastic_constants_dict['T_D'] = T_D
+            elastic_constants_dict['T_D_l'] = T_D_l
+            elastic_constants_dict['T_D_t'] = T_D_t
+            #elastic_constants_dict['C_t'] = c_t
+            #elastic_constants_dict['C_l'] = c_l
+            elastic_constants_dict['R_l'] = R_f_l
+            elastic_constants_dict['R_t'] = R_f_t
     return elastic_constants_dict
 
 
 if __name__ == '__main__':
     elastic_constants_dict = {'B_vrh': 34.99, 'G_vrh': 17.20}
     cwd = '.'
-    elastic_constants_dict= sound_velocity(elastic_constants_dict, cwd)
+    elastic_constants_dict = sound_velocity(elastic_constants_dict, cwd)
     print(elastic_constants_dict)

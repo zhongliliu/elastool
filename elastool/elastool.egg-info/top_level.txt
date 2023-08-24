@@ -1,0 +1,17 @@
+calc_elastic_constants
+calc_stress
+deform_cell_asess_strains
+deform_cell_ohess_strains
+deform_cell_ulics
+equilibrium_md
+extract_mean_values
+find_spg
+make_conv_cell
+optimize_initial_str
+read_input
+relax_atoms_pos
+sound_velocity
+stability_criteria
+strain_matrix
+vasp_run
+write_incar

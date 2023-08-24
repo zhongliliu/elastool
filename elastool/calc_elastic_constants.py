@@ -1,7 +1,7 @@
 """
-  Elastool -- Elastic toolkit for finite-temperature elastic constants calculations
+  Elastool -- Elastic toolkit for zero and finite-temperature elastic constants and mechanical properties calculations
 
-  Copyright (C) 2019-2020 by Zhong-Li Liu
+  Copyright (C) 2019-2024 by Zhong-Li Liu and Chinedu Ekuma
 
   This program is free software; you can redistribute it and/or modify it under the
   terms of the GNU General Public License as published by the Free Software Foundation
@@ -11,16 +11,16 @@
   WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
   PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-  E-mail: zl.liu@163.com
+  E-mail: zl.liu@163.com, cekuma1@gmail.com
 """
 
 from copy import deepcopy
-from numpy import array, vstack, linalg
+from numpy import array, vstack, linalg, pi
 from strain_matrix import strain_matrix
 from read_input import indict
 
 
-def Cubic(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor):
+def Cubic(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
     for n, up in enumerate(stress_set_dict.keys()):
         s = strain_matrix(latt_system, up)[0]
 
@@ -28,18 +28,18 @@ def Cubic(latt_system, elastic_constants_dict, stress_set_dict, convertion_facto
         stress_list = array(stress_set_dict[up][0])
 
         eplisons_now = array([[s[0][0], s[1][1]+s[2][2], 0.],
-                                 [s[1][1], s[0][0]+s[2][2], 0.],
-                                 [s[2][2], s[0][0]+s[1][1], 0.],
-                                 [0.,      0.,        2*s[1][2]],
-                                 [0.,      0.,        2*s[0][2]],
-                                 [0.,      0.,        2*s[0][1]]])
+                              [s[1][1], s[0][0]+s[2][2], 0.],
+                              [s[2][2], s[0][0]+s[1][1], 0.],
+                              [0.,      0.,        2*s[1][2]],
+                              [0.,      0.,        2*s[0][2]],
+                              [0.,      0.,        2*s[0][1]]])
 
         stresses_now = array([[stress_list[0]],
-                                 [stress_list[1]],
-                                 [stress_list[2]],
-                                 [stress_list[3]],
-                                 [stress_list[4]],
-                                 [stress_list[5]]])
+                              [stress_list[1]],
+                              [stress_list[2]],
+                              [stress_list[3]],
+                              [stress_list[4]],
+                              [stress_list[5]]])
         if n == 0:
             eplisons = deepcopy(eplisons_now)
             stresses = deepcopy(stresses_now)
@@ -47,7 +47,7 @@ def Cubic(latt_system, elastic_constants_dict, stress_set_dict, convertion_facto
             eplisons = vstack((eplisons, eplisons_now))
             stresses = vstack((stresses, stresses_now))
 
-    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * convertion_factor
+    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * conversion_factor
 
     c11 = cij[0][0]
     c12 = cij[1][0]
@@ -80,25 +80,25 @@ def Cubic(latt_system, elastic_constants_dict, stress_set_dict, convertion_facto
     return elastic_constants_dict
 
 
-def Hexagonal(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor):
+def Hexagonal(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
     for n, up in enumerate(stress_set_dict.keys()):
         if up == 0:
             s1 = strain_matrix(latt_system, up)[0]
             stress_list1 = array(stress_set_dict[up][0])
 
             eplisons_now = array([[s1[0][0],  s1[1][1],  s1[2][2],  0., 0.],
-                                     [s1[1][1],  s1[0][0],  s1[2][2],  0., 0.],
-                                     [0., 0., s1[0][0]+s1[1][1], s1[2][2], 0.],
-                                     [0.,    0.,     0.,     0.,   2*s1[1][2]],
-                                     [0.,    0.,     0.,     0.,   2*s1[0][2]],
-                                     [s1[0][1],   -s1[0][1], 0.,       0., 0.]])
+                                  [s1[1][1],  s1[0][0],  s1[2][2],  0., 0.],
+                                  [0., 0., s1[0][0]+s1[1][1], s1[2][2], 0.],
+                                  [0.,    0.,     0.,     0.,   2*s1[1][2]],
+                                  [0.,    0.,     0.,     0.,   2*s1[0][2]],
+                                  [s1[0][1],   -s1[0][1], 0.,       0., 0.]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[2]],
-                                     [stress_list1[3]],
-                                     [stress_list1[4]],
-                                     [stress_list1[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]]])
         else:
             s1 = strain_matrix(latt_system, up)[0]
             s2 = strain_matrix(latt_system, up)[1]
@@ -106,30 +106,30 @@ def Hexagonal(latt_system, elastic_constants_dict, stress_set_dict, convertion_f
             stress_list2 = array(stress_set_dict[up][1])
 
             eplisons_now = array([[s1[0][0],  s1[1][1],  s1[2][2],  0., 0.],
-                                     [s1[1][1],  s1[0][0],  s1[2][2],  0., 0.],
-                                     [0., 0., s1[0][0]+s1[1][1], s1[2][2], 0.],
-                                     [0.,    0.,     0.,     0.,   2*s1[1][2]],
-                                     [0.,    0.,     0.,     0.,   2*s1[0][2]],
-                                     [s1[0][1],   -s1[0][1], 0.,       0., 0.],
-                                     [s2[0][0],  s2[1][1],  s2[2][2],  0., 0.],
-                                     [s2[1][1],  s2[0][0],  s2[2][2],  0., 0.],
-                                     [0., 0., s2[0][0]+s2[1][1], s2[2][2], 0.],
-                                     [0.,    0.,     0.,     0.,   2*s2[1][2]],
-                                     [0.,    0.,     0.,     0.,   2*s2[0][2]],
-                                     [s2[0][1],   -s2[0][1], 0.,       0., 0.]])
+                                  [s1[1][1],  s1[0][0],  s1[2][2],  0., 0.],
+                                  [0., 0., s1[0][0]+s1[1][1], s1[2][2], 0.],
+                                  [0.,    0.,     0.,     0.,   2*s1[1][2]],
+                                  [0.,    0.,     0.,     0.,   2*s1[0][2]],
+                                  [s1[0][1],   -s1[0][1], 0.,       0., 0.],
+                                  [s2[0][0],  s2[1][1],  s2[2][2],  0., 0.],
+                                  [s2[1][1],  s2[0][0],  s2[2][2],  0., 0.],
+                                  [0., 0., s2[0][0]+s2[1][1], s2[2][2], 0.],
+                                  [0.,    0.,     0.,     0.,   2*s2[1][2]],
+                                  [0.,    0.,     0.,     0.,   2*s2[0][2]],
+                                  [s2[0][1],   -s2[0][1], 0.,       0., 0.]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[2]],
-                                     [stress_list1[3]],
-                                     [stress_list1[4]],
-                                     [stress_list1[5]],
-                                     [stress_list2[0]],
-                                     [stress_list2[1]],
-                                     [stress_list2[2]],
-                                     [stress_list2[3]],
-                                     [stress_list2[4]],
-                                     [stress_list2[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]],
+                                  [stress_list2[0]],
+                                  [stress_list2[1]],
+                                  [stress_list2[2]],
+                                  [stress_list2[3]],
+                                  [stress_list2[4]],
+                                  [stress_list2[5]]])
         if n == 0:
             eplisons = deepcopy(eplisons_now)
             stresses = deepcopy(stresses_now)
@@ -137,7 +137,7 @@ def Hexagonal(latt_system, elastic_constants_dict, stress_set_dict, convertion_f
             eplisons = vstack((eplisons, eplisons_now))
             stresses = vstack((stresses, stresses_now))
 
-    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * convertion_factor
+    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * conversion_factor
 
     c11 = cij[0][0]
     c12 = cij[1][0]
@@ -177,25 +177,25 @@ def Hexagonal(latt_system, elastic_constants_dict, stress_set_dict, convertion_f
     return elastic_constants_dict
 
 
-def Trigonal1(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor):
+def Trigonal1(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
     for n, up in enumerate(stress_set_dict.keys()):
         if up == 0:
             s1 = strain_matrix(latt_system, up)[0]
             stress_list1 = array(stress_set_dict[up][0])
 
             eplisons_now = array([[s1[0][0],  s1[1][1],  s1[2][2], 2*s1[1][2],  0., 0.],
-                                     [s1[1][1],  s1[0][0],  s1[2][2],-2*s1[1][2],  0., 0.],
-                                     [0.,    0., s1[0][0]+s1[1][1],    0.,   s1[2][2], 0.],
-                                     [0.,    0.,  0.,  s1[0][0]-s1[1][1],  0., 2*s1[1][2]],
-                                     [0.,    0.,     0., 2*s1[0][1],       0., 2*s1[0][2]],
-                                     [s1[0][1],  -s1[0][1],  0.,   2*s1[0][2],   0.,   0.]])
+                                  [s1[1][1],  s1[0][0],  s1[2][2],-2*s1[1][2],  0., 0.],
+                                  [0.,    0., s1[0][0]+s1[1][1],    0.,   s1[2][2], 0.],
+                                  [0.,    0.,  0.,  s1[0][0]-s1[1][1],  0., 2*s1[1][2]],
+                                  [0.,    0.,     0., 2*s1[0][1],       0., 2*s1[0][2]],
+                                  [s1[0][1],  -s1[0][1],  0.,   2*s1[0][2],   0.,   0.]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[2]],
-                                     [stress_list1[3]],
-                                     [stress_list1[4]],
-                                     [stress_list1[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]]])
         else:
             s1 = strain_matrix(latt_system, up)[0]
             s2 = strain_matrix(latt_system, up)[1]
@@ -203,30 +203,30 @@ def Trigonal1(latt_system, elastic_constants_dict, stress_set_dict, convertion_f
             stress_list2 = array(stress_set_dict[up][1])
 
             eplisons_now = array([[s1[0][0],  s1[1][1],  s1[2][2], 2*s1[1][2],  0., 0.],
-                                     [s1[1][1],  s1[0][0],  s1[2][2],-2*s1[1][2],  0., 0.],
-                                     [0.,    0., s1[0][0]+s1[1][1],    0.,   s1[2][2], 0.],
-                                     [0.,    0.,  0.,  s1[0][0]-s1[1][1],  0., 2*s1[1][2]],
-                                     [0.,    0.,     0., 2*s1[0][1],       0., 2*s1[0][2]],
-                                     [s1[0][1],  -s1[0][1],  0.,   2*s1[0][2],   0.,   0.],
-                                     [s2[0][0],  s2[1][1],  s2[2][2], 2*s2[1][2],  0., 0.],
-                                     [s2[1][1],  s2[0][0],  s2[2][2],-2*s2[1][2],  0., 0.],
-                                     [0.,    0., s2[0][0]+s2[1][1],    0.,   s2[2][2], 0.],
-                                     [0.,    0.,  0.,  s2[0][0]-s2[1][1],  0., 2*s2[1][2]],
-                                     [0.,    0.,     0., 2*s2[0][1],       0., 2*s2[0][2]],
-                                     [s2[0][1],  -s2[0][1],  0.,   2*s2[0][2],   0.,   0.]])
+                                  [s1[1][1],  s1[0][0],  s1[2][2],-2*s1[1][2],  0., 0.],
+                                  [0.,    0., s1[0][0]+s1[1][1],    0.,   s1[2][2], 0.],
+                                  [0.,    0.,  0.,  s1[0][0]-s1[1][1],  0., 2*s1[1][2]],
+                                  [0.,    0.,     0., 2*s1[0][1],       0., 2*s1[0][2]],
+                                  [s1[0][1],  -s1[0][1],  0.,   2*s1[0][2],   0.,   0.],
+                                  [s2[0][0],  s2[1][1],  s2[2][2], 2*s2[1][2],  0., 0.],
+                                  [s2[1][1],  s2[0][0],  s2[2][2],-2*s2[1][2],  0., 0.],
+                                  [0.,    0., s2[0][0]+s2[1][1],    0.,   s2[2][2], 0.],
+                                  [0.,    0.,  0.,  s2[0][0]-s2[1][1],  0., 2*s2[1][2]],
+                                  [0.,    0.,     0., 2*s2[0][1],       0., 2*s2[0][2]],
+                                  [s2[0][1],  -s2[0][1],  0.,   2*s2[0][2],   0.,   0.]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[2]],
-                                     [stress_list1[3]],
-                                     [stress_list1[4]],
-                                     [stress_list1[5]],
-                                     [stress_list2[0]],
-                                     [stress_list2[1]],
-                                     [stress_list2[2]],
-                                     [stress_list2[3]],
-                                     [stress_list2[4]],
-                                     [stress_list2[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]],
+                                  [stress_list2[0]],
+                                  [stress_list2[1]],
+                                  [stress_list2[2]],
+                                  [stress_list2[3]],
+                                  [stress_list2[4]],
+                                  [stress_list2[5]]])
         if n == 0:
             eplisons = deepcopy(eplisons_now)
             stresses = deepcopy(stresses_now)
@@ -234,7 +234,7 @@ def Trigonal1(latt_system, elastic_constants_dict, stress_set_dict, convertion_f
             eplisons = vstack((eplisons, eplisons_now))
             stresses = vstack((stresses, stresses_now))
 
-    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * convertion_factor
+    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * conversion_factor
 
     c11 = cij[0][0]
     c12 = cij[1][0]
@@ -252,25 +252,25 @@ def Trigonal1(latt_system, elastic_constants_dict, stress_set_dict, convertion_f
     return elastic_constants_dict
 
 
-def Trigonal2(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor):
+def Trigonal2(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
     for n, up in enumerate(stress_set_dict.keys()):
         if up == 0:
             s1 = strain_matrix(latt_system, up)[0]
             stress_list1 = array(stress_set_dict[up][0])
 
             eplisons_now = array([[s1[0][0],  s1[1][1],  s1[2][2],  2*s1[1][2],  2*s1[0][2],  0., 0.],
-                                     [s1[1][1],  s1[0][0],  s1[2][2], -2*s1[1][2], -2*s1[0][2],  0., 0.],
-                                     [0.,    0., s1[0][0]+s1[1][1],      0.,      0.,      s1[2][2], 0.],
-                                     [0.,    0.,     0., s1[0][0]-s1[1][1], -2*s1[0][1], 0., 2*s1[1][2]],
-                                     [0.,    0.,     0., 2*s1[0][1], s1[0][0]-s1[1][1],  0., 2*s1[0][2]],
-                                     [s1[0][1],  -s1[0][1],  0.,   2*s1[0][2],   -2*s1[1][2],   0.,  0.]])
+                                 [s1[1][1],  s1[0][0],  s1[2][2], -2*s1[1][2], -2*s1[0][2],  0., 0.],
+                                 [0.,    0., s1[0][0]+s1[1][1],      0.,      0.,      s1[2][2], 0.],
+                                 [0.,    0.,     0., s1[0][0]-s1[1][1], -2*s1[0][1], 0., 2*s1[1][2]],
+                                 [0.,    0.,     0., 2*s1[0][1], s1[0][0]-s1[1][1],  0., 2*s1[0][2]],
+                                 [s1[0][1],  -s1[0][1],  0.,   2*s1[0][2],   -2*s1[1][2],   0.,  0.]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[2]],
-                                     [stress_list1[3]],
-                                     [stress_list1[4]],
-                                     [stress_list1[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]]])
         else:
             s1 = strain_matrix(latt_system, up)[0]
             s2 = strain_matrix(latt_system, up)[1]
@@ -278,30 +278,30 @@ def Trigonal2(latt_system, elastic_constants_dict, stress_set_dict, convertion_f
             stress_list2 = array(stress_set_dict[up][1])
 
             eplisons_now = array([[s1[0][0],  s1[1][1],  s1[2][2],  2*s1[1][2],  2*s1[0][2],  0., 0.],
-                                     [s1[1][1],  s1[0][0],  s1[2][2], -2*s1[1][2], -2*s1[0][2],  0., 0.],
-                                     [0.,    0., s1[0][0]+s1[1][1],      0.,      0.,      s1[2][2], 0.],
-                                     [0.,    0.,     0., s1[0][0]-s1[1][1], -2*s1[0][1], 0., 2*s1[1][2]],
-                                     [0.,    0.,     0., 2*s1[0][1], s1[0][0]-s1[1][1],  0., 2*s1[0][2]],
-                                     [s1[0][1],  -s1[0][1],  0.,   2*s1[0][2],   -2*s1[1][2],   0.,  0.],
-                                     [s2[0][0],  s2[1][1],  s2[2][2],  2*s2[1][2],  2*s2[0][2],  0., 0.],
-                                     [s2[1][1],  s2[0][0],  s2[2][2], -2*s2[1][2], -2*s2[0][2],  0., 0.],
-                                     [0.,    0., s2[0][0]+s2[1][1],      0.,      0.,      s2[2][2], 0.],
-                                     [0.,    0.,     0., s2[0][0]-s2[1][1], -2*s2[0][1], 0., 2*s2[1][2]],
-                                     [0.,    0.,     0., 2*s2[0][1], s2[0][0]-s2[1][1],  0., 2*s2[0][2]],
-                                     [s2[0][1],  -s2[0][1],  0.,   2*s2[0][2],   -2*s2[1][2],   0.,  0.]])
+                                  [s1[1][1],  s1[0][0],  s1[2][2], -2*s1[1][2], -2*s1[0][2],  0., 0.],
+                                  [0.,    0., s1[0][0]+s1[1][1],      0.,      0.,      s1[2][2], 0.],
+                                  [0.,    0.,     0., s1[0][0]-s1[1][1], -2*s1[0][1], 0., 2*s1[1][2]],
+                                  [0.,    0.,     0., 2*s1[0][1], s1[0][0]-s1[1][1],  0., 2*s1[0][2]],
+                                  [s1[0][1],  -s1[0][1],  0.,   2*s1[0][2],   -2*s1[1][2],   0.,  0.],
+                                  [s2[0][0],  s2[1][1],  s2[2][2],  2*s2[1][2],  2*s2[0][2],  0., 0.],
+                                  [s2[1][1],  s2[0][0],  s2[2][2], -2*s2[1][2], -2*s2[0][2],  0., 0.],
+                                  [0.,    0., s2[0][0]+s2[1][1],      0.,      0.,      s2[2][2], 0.],
+                                  [0.,    0.,     0., s2[0][0]-s2[1][1], -2*s2[0][1], 0., 2*s2[1][2]],
+                                  [0.,    0.,     0., 2*s2[0][1], s2[0][0]-s2[1][1],  0., 2*s2[0][2]],
+                                  [s2[0][1],  -s2[0][1],  0.,   2*s2[0][2],   -2*s2[1][2],   0.,  0.]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[2]],
-                                     [stress_list1[3]],
-                                     [stress_list1[4]],
-                                     [stress_list1[5]],
-                                     [stress_list2[0]],
-                                     [stress_list2[1]],
-                                     [stress_list2[2]],
-                                     [stress_list2[3]],
-                                     [stress_list2[4]],
-                                     [stress_list2[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]],
+                                  [stress_list2[0]],
+                                  [stress_list2[1]],
+                                  [stress_list2[2]],
+                                  [stress_list2[3]],
+                                  [stress_list2[4]],
+                                  [stress_list2[5]]])
         if n == 0:
             eplisons = deepcopy(eplisons_now)
             stresses = deepcopy(stresses_now)
@@ -309,7 +309,7 @@ def Trigonal2(latt_system, elastic_constants_dict, stress_set_dict, convertion_f
             eplisons = vstack((eplisons, eplisons_now))
             stresses = vstack((stresses, stresses_now))
 
-    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * convertion_factor
+    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * conversion_factor
 
     c11 = cij[0][0]
     c12 = cij[1][0]
@@ -329,25 +329,25 @@ def Trigonal2(latt_system, elastic_constants_dict, stress_set_dict, convertion_f
     return elastic_constants_dict
     
 
-def Tetragonal1(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor):
+def Tetragonal1(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
     for n, up in enumerate(stress_set_dict.keys()):
         if up == 0:
             s1 = strain_matrix(latt_system, up)[0]
             stress_list1 = array(stress_set_dict[up][0])
 
             eplisons_now = array([[s1[0][0],  s1[1][1],  s1[2][2],   0.,   0.,   0.],
-                                     [s1[1][1],  s1[0][0],  s1[2][2],   0.,   0.,   0.],
-                                     [0.,    0., s1[0][0]+s1[1][1], s1[2][2], 0.,   0.],
-                                     [0.,    0.,     0.,     0.,      2*s1[1][2],   0.],
-                                     [0.,    0.,     0.,     0.,      2*s1[0][2],   0.],
-                                     [0.,    0.,     0.,     0.,       0.,  2*s1[0][1]]])
+                                  [s1[1][1],  s1[0][0],  s1[2][2],   0.,   0.,   0.],
+                                  [0.,    0., s1[0][0]+s1[1][1], s1[2][2], 0.,   0.],
+                                  [0.,    0.,     0.,     0.,      2*s1[1][2],   0.],
+                                  [0.,    0.,     0.,     0.,      2*s1[0][2],   0.],
+                                  [0.,    0.,     0.,     0.,       0.,  2*s1[0][1]]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[2]],
-                                     [stress_list1[3]],
-                                     [stress_list1[4]],
-                                     [stress_list1[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]]])
         else:
             s1 = strain_matrix(latt_system, up)[0]
             s2 = strain_matrix(latt_system, up)[1]
@@ -355,30 +355,30 @@ def Tetragonal1(latt_system, elastic_constants_dict, stress_set_dict, convertion
             stress_list2 = array(stress_set_dict[up][1])
 
             eplisons_now = array([[s1[0][0],  s1[1][1],  s1[2][2],   0.,   0.,   0.],
-                                     [s1[1][1],  s1[0][0],  s1[2][2],   0.,   0.,   0.],
-                                     [0.,    0., s1[0][0]+s1[1][1], s1[2][2], 0.,   0.],
-                                     [0.,    0.,     0.,     0.,      2*s1[1][2],   0.],
-                                     [0.,    0.,     0.,     0.,      2*s1[0][2],   0.],
-                                     [0.,    0.,     0.,     0.,       0.,  2*s1[0][1]],
-                                     [s2[0][0],  s2[1][1],  s2[2][2],   0.,   0.,   0.],
-                                     [s2[1][1],  s2[0][0],  s2[2][2],   0.,   0.,   0.],
-                                     [0.,    0., s2[0][0]+s2[1][1], s2[2][2], 0.,   0.],
-                                     [0.,    0.,     0.,     0.,      2*s2[1][2],   0.],
-                                     [0.,    0.,     0.,     0.,      2*s2[0][2],   0.],
-                                     [0.,    0.,     0.,     0.,       0.,  2*s2[0][1]]])
+                                  [s1[1][1],  s1[0][0],  s1[2][2],   0.,   0.,   0.],
+                                  [0.,    0., s1[0][0]+s1[1][1], s1[2][2], 0.,   0.],
+                                  [0.,    0.,     0.,     0.,      2*s1[1][2],   0.],
+                                  [0.,    0.,     0.,     0.,      2*s1[0][2],   0.],
+                                  [0.,    0.,     0.,     0.,       0.,  2*s1[0][1]],
+                                  [s2[0][0],  s2[1][1],  s2[2][2],   0.,   0.,   0.],
+                                  [s2[1][1],  s2[0][0],  s2[2][2],   0.,   0.,   0.],
+                                  [0.,    0., s2[0][0]+s2[1][1], s2[2][2], 0.,   0.],
+                                  [0.,    0.,     0.,     0.,      2*s2[1][2],   0.],
+                                  [0.,    0.,     0.,     0.,      2*s2[0][2],   0.],
+                                  [0.,    0.,     0.,     0.,       0.,  2*s2[0][1]]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[2]],
-                                     [stress_list1[3]],
-                                     [stress_list1[4]],
-                                     [stress_list1[5]],
-                                     [stress_list2[0]],
-                                     [stress_list2[1]],
-                                     [stress_list2[2]],
-                                     [stress_list2[3]],
-                                     [stress_list2[4]],
-                                     [stress_list2[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]],
+                                  [stress_list2[0]],
+                                  [stress_list2[1]],
+                                  [stress_list2[2]],
+                                  [stress_list2[3]],
+                                  [stress_list2[4]],
+                                  [stress_list2[5]]])
         if n == 0:
             eplisons = deepcopy(eplisons_now)
             stresses = deepcopy(stresses_now)
@@ -386,7 +386,7 @@ def Tetragonal1(latt_system, elastic_constants_dict, stress_set_dict, convertion
             eplisons = vstack((eplisons, eplisons_now))
             stresses = vstack((stresses, stresses_now))
 
-    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * convertion_factor
+    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * conversion_factor
 
     c11 = cij[0][0]
     c12 = cij[1][0]
@@ -428,25 +428,25 @@ def Tetragonal1(latt_system, elastic_constants_dict, stress_set_dict, convertion
     return elastic_constants_dict
 
 
-def Tetragonal2(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor):
+def Tetragonal2(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
     for n, up in enumerate(stress_set_dict.keys()):
         if up == 0:
             s1 = strain_matrix(latt_system, up)[0]
             stress_list1 = array(stress_set_dict[up][0])
 
             eplisons_now = array([[s1[0][0],  s1[1][1],  s1[2][2], 2*s1[0][1],  0.,   0.,   0.],
-                                     [s1[1][1],  s1[0][0],  s1[2][2],-2*s1[0][1],  0.,   0.,   0.],
-                                     [0.,    0., s1[0][0]+s1[1][1],      0.,   s1[2][2], 0.,   0.],
-                                     [0.,    0.,     0.,     0.,     0.,     2*s1[1][2],       0.],
-                                     [0.,    0.,     0.,     0.,     0.,     2*s1[0][2],       0.],
-                                     [0.,    0.,     0., s1[0][0]-s1[1][1],   0.,   0.,2*s1[0][1]]])
+                                  [s1[1][1],  s1[0][0],  s1[2][2],-2*s1[0][1],  0.,   0.,   0.],
+                                  [0.,    0., s1[0][0]+s1[1][1],      0.,   s1[2][2], 0.,   0.],
+                                  [0.,    0.,     0.,     0.,     0.,     2*s1[1][2],       0.],
+                                  [0.,    0.,     0.,     0.,     0.,     2*s1[0][2],       0.],
+                                  [0.,    0.,     0., s1[0][0]-s1[1][1],   0.,   0.,2*s1[0][1]]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[2]],
-                                     [stress_list1[3]],
-                                     [stress_list1[4]],
-                                     [stress_list1[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]]])
         else:
             s1 = strain_matrix(latt_system, up)[0]
             s2 = strain_matrix(latt_system, up)[1]
@@ -454,30 +454,30 @@ def Tetragonal2(latt_system, elastic_constants_dict, stress_set_dict, convertion
             stress_list2 = array(stress_set_dict[up][1])
 
             eplisons_now = array([[s1[0][0],  s1[1][1],  s1[2][2], 2*s1[0][1],  0.,   0.,   0.],
-                                     [s1[1][1],  s1[0][0],  s1[2][2],-2*s1[0][1],  0.,   0.,   0.],
-                                     [0.,    0., s1[0][0]+s1[1][1],      0.,   s1[2][2], 0.,   0.],
-                                     [0.,    0.,     0.,     0.,     0.,     2*s1[1][2],       0.],
-                                     [0.,    0.,     0.,     0.,     0.,     2*s1[0][2],       0.],
-                                     [0.,    0.,     0., s1[0][0]-s1[1][1],   0.,   0.,2*s1[0][1]],
-                                     [s2[0][0],  s2[1][1],  s2[2][2], 2*s2[0][1],  0.,   0.,   0.],
-                                     [s2[1][1],  s2[0][0],  s2[2][2],-2*s2[0][1],  0.,   0.,   0.],
-                                     [0.,    0., s2[0][0]+s2[1][1],      0.,   s2[2][2], 0.,   0.],
-                                     [0.,    0.,     0.,     0.,     0.,     2*s2[1][2],       0.],
-                                     [0.,    0.,     0.,     0.,     0.,     2*s2[0][2],       0.],
-                                     [0.,    0.,     0., s2[0][0]-s2[1][1],   0.,   0.,2*s2[0][1]]])
+                                  [s1[1][1],  s1[0][0],  s1[2][2],-2*s1[0][1],  0.,   0.,   0.],
+                                  [0.,    0., s1[0][0]+s1[1][1],      0.,   s1[2][2], 0.,   0.],
+                                  [0.,    0.,     0.,     0.,     0.,     2*s1[1][2],       0.],
+                                  [0.,    0.,     0.,     0.,     0.,     2*s1[0][2],       0.],
+                                  [0.,    0.,     0., s1[0][0]-s1[1][1],   0.,   0.,2*s1[0][1]],
+                                  [s2[0][0],  s2[1][1],  s2[2][2], 2*s2[0][1],  0.,   0.,   0.],
+                                  [s2[1][1],  s2[0][0],  s2[2][2],-2*s2[0][1],  0.,   0.,   0.],
+                                  [0.,    0., s2[0][0]+s2[1][1],      0.,   s2[2][2], 0.,   0.],
+                                  [0.,    0.,     0.,     0.,     0.,     2*s2[1][2],       0.],
+                                  [0.,    0.,     0.,     0.,     0.,     2*s2[0][2],       0.],
+                                  [0.,    0.,     0., s2[0][0]-s2[1][1],   0.,   0.,2*s2[0][1]]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[2]],
-                                     [stress_list1[3]],
-                                     [stress_list1[4]],
-                                     [stress_list1[5]],
-                                     [stress_list2[0]],
-                                     [stress_list2[1]],
-                                     [stress_list2[2]],
-                                     [stress_list2[3]],
-                                     [stress_list2[4]],
-                                     [stress_list2[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]],
+                                  [stress_list2[0]],
+                                  [stress_list2[1]],
+                                  [stress_list2[2]],
+                                  [stress_list2[3]],
+                                  [stress_list2[4]],
+                                  [stress_list2[5]]])
         if n == 0:
             eplisons = deepcopy(eplisons_now)
             stresses = deepcopy(stresses_now)
@@ -485,7 +485,7 @@ def Tetragonal2(latt_system, elastic_constants_dict, stress_set_dict, convertion
             eplisons = vstack((eplisons, eplisons_now))
             stresses = vstack((stresses, stresses_now))
 
-    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * convertion_factor
+    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * conversion_factor
 
     c11 = cij[0][0]
     c12 = cij[1][0]
@@ -529,25 +529,25 @@ def Tetragonal2(latt_system, elastic_constants_dict, stress_set_dict, convertion
     return elastic_constants_dict
 
 
-def Orthorombic(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor):
+def Orthorombic(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
     for n, up in enumerate(stress_set_dict.keys()):
         if up == 0:
             s1 = strain_matrix(latt_system, up)[0]
             stress_list1 = array(stress_set_dict[up][0])
 
             eplisons_now = array([[s1[0][0], s1[1][1], s1[2][2], 0., 0., 0., 0., 0., 0.],
-                                     [0., s1[0][0], 0., s1[1][1], s1[2][2], 0., 0., 0., 0.],
-                                     [0., 0., s1[0][0], 0., s1[1][1], s1[2][2], 0., 0., 0.],
-                                     [0.,   0.,   0.,   0.,   0.,  0., 2*s1[1][2],  0., 0.],
-                                     [0.,   0.,   0.,   0.,   0.,  0.,  0.,2*s1[0][2],  0.],
-                                     [0.,   0.,   0.,   0.,   0.,  0.,  0.,  0.,2*s1[0][1]]])
+                                  [0., s1[0][0], 0., s1[1][1], s1[2][2], 0., 0., 0., 0.],
+                                  [0., 0., s1[0][0], 0., s1[1][1], s1[2][2], 0., 0., 0.],
+                                  [0.,   0.,   0.,   0.,   0.,  0., 2*s1[1][2],  0., 0.],
+                                  [0.,   0.,   0.,   0.,   0.,  0.,  0.,2*s1[0][2],  0.],
+                                  [0.,   0.,   0.,   0.,   0.,  0.,  0.,  0.,2*s1[0][1]]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[2]],
-                                     [stress_list1[3]],
-                                     [stress_list1[4]],
-                                     [stress_list1[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]]])
         else:        
             s1 = strain_matrix(latt_system, up)[0]
             s2 = strain_matrix(latt_system, up)[1]
@@ -557,42 +557,42 @@ def Orthorombic(latt_system, elastic_constants_dict, stress_set_dict, convertion
             stress_list3 = array(stress_set_dict[up][2])
 
             eplisons_now = array([[s1[0][0], s1[1][1], s1[2][2], 0., 0., 0., 0., 0., 0.],
-                                     [0., s1[0][0], 0., s1[1][1], s1[2][2], 0., 0., 0., 0.],
-                                     [0., 0., s1[0][0], 0., s1[1][1], s1[2][2], 0., 0., 0.],
-                                     [0.,   0.,   0.,   0.,   0.,  0., 2*s1[1][2],  0., 0.],
-                                     [0.,   0.,   0.,   0.,   0.,  0.,  0.,2*s1[0][2],  0.],
-                                     [0.,   0.,   0.,   0.,   0.,  0.,  0.,  0.,2*s1[0][1]],
-                                     [s2[0][0], s2[1][1], s2[2][2], 0., 0., 0., 0., 0., 0.],
-                                     [0., s2[0][0], 0., s2[1][1], s2[2][2], 0., 0., 0., 0.],
-                                     [0., 0., s2[0][0], 0., s2[1][1], s2[2][2], 0., 0., 0.],
-                                     [0.,   0.,   0.,   0.,   0.,   0.,2*s2[1][2],  0., 0.],
-                                     [0.,   0.,   0.,   0.,   0.,   0.,  0.,2*s2[0][2], 0.],
-                                     [0.,   0.,   0.,   0.,   0.,   0.,  0., 0.,2*s2[0][1]],
-                                     [s3[0][0], s3[1][1], s3[2][2], 0., 0., 0., 0., 0., 0.],
-                                     [0., s3[0][0], 0., s3[1][1], s3[2][2], 0., 0., 0., 0.],
-                                     [0., 0., s3[0][0], 0., s3[1][1], s3[2][2], 0., 0., 0.],
-                                     [0.,   0.,   0.,   0.,   0.,   0., 2*s3[1][2], 0., 0.],
-                                     [0.,   0.,   0.,   0.,   0.,   0., 0., 2*s3[0][2], 0.],
-                                     [0.,   0.,   0.,   0.,   0.,   0., 0., 0., 2*s3[0][1]]])
+                                  [0., s1[0][0], 0., s1[1][1], s1[2][2], 0., 0., 0., 0.],
+                                  [0., 0., s1[0][0], 0., s1[1][1], s1[2][2], 0., 0., 0.],
+                                  [0.,   0.,   0.,   0.,   0.,  0., 2*s1[1][2],  0., 0.],
+                                  [0.,   0.,   0.,   0.,   0.,  0.,  0.,2*s1[0][2],  0.],
+                                  [0.,   0.,   0.,   0.,   0.,  0.,  0.,  0.,2*s1[0][1]],
+                                  [s2[0][0], s2[1][1], s2[2][2], 0., 0., 0., 0., 0., 0.],
+                                  [0., s2[0][0], 0., s2[1][1], s2[2][2], 0., 0., 0., 0.],
+                                  [0., 0., s2[0][0], 0., s2[1][1], s2[2][2], 0., 0., 0.],
+                                  [0.,   0.,   0.,   0.,   0.,   0.,2*s2[1][2],  0., 0.],
+                                  [0.,   0.,   0.,   0.,   0.,   0.,  0.,2*s2[0][2], 0.],
+                                  [0.,   0.,   0.,   0.,   0.,   0.,  0., 0.,2*s2[0][1]],
+                                  [s3[0][0], s3[1][1], s3[2][2], 0., 0., 0., 0., 0., 0.],
+                                  [0., s3[0][0], 0., s3[1][1], s3[2][2], 0., 0., 0., 0.],
+                                  [0., 0., s3[0][0], 0., s3[1][1], s3[2][2], 0., 0., 0.],
+                                  [0.,   0.,   0.,   0.,   0.,   0., 2*s3[1][2], 0., 0.],
+                                  [0.,   0.,   0.,   0.,   0.,   0., 0., 2*s3[0][2], 0.],
+                                  [0.,   0.,   0.,   0.,   0.,   0., 0., 0., 2*s3[0][1]]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[2]],
-                                     [stress_list1[3]],
-                                     [stress_list1[4]],
-                                     [stress_list1[5]],
-                                     [stress_list2[0]],
-                                     [stress_list2[1]],
-                                     [stress_list2[2]],
-                                     [stress_list2[3]],
-                                     [stress_list2[4]],
-                                     [stress_list2[5]],
-                                     [stress_list3[0]],
-                                     [stress_list3[1]],
-                                     [stress_list3[2]],
-                                     [stress_list3[3]],
-                                     [stress_list3[4]],
-                                     [stress_list3[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]],
+                                  [stress_list2[0]],
+                                  [stress_list2[1]],
+                                  [stress_list2[2]],
+                                  [stress_list2[3]],
+                                  [stress_list2[4]],
+                                  [stress_list2[5]],
+                                  [stress_list3[0]],
+                                  [stress_list3[1]],
+                                  [stress_list3[2]],
+                                  [stress_list3[3]],
+                                  [stress_list3[4]],
+                                  [stress_list3[5]]])
         if n == 0:
             eplisons = deepcopy(eplisons_now)
             stresses = deepcopy(stresses_now)
@@ -600,7 +600,7 @@ def Orthorombic(latt_system, elastic_constants_dict, stress_set_dict, convertion
             eplisons = vstack((eplisons, eplisons_now))
             stresses = vstack((stresses, stresses_now))
 
-    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * convertion_factor
+    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * conversion_factor
     c11 = cij[0][0]
     c12 = cij[1][0]
     c13 = cij[2][0]
@@ -644,25 +644,25 @@ def Orthorombic(latt_system, elastic_constants_dict, stress_set_dict, convertion
     return elastic_constants_dict
 
 
-def Monoclinic(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor):
+def Monoclinic(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
     for n, up in enumerate(stress_set_dict.keys()):
         if up == 0:
             s1 = strain_matrix(latt_system, up)[0]
             stress_list1 = array(stress_set_dict[up][0])
 
             eplisons_now = array([[s1[0][0], s1[1][1], s1[2][2], 2*s1[0][2], 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., s1[0][0], 0., 0., s1[1][1], s1[2][2], 2*s1[0][2], 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., s1[0][0], 0.,  0., s1[1][1], 0.,s1[2][2], 2*s1[0][2], 0., 0., 0., 0.],
-                                     [0., 0.,  0.,  0., 0.,  0.,  0.,  0.,  0.,  2*s1[1][2],   2*s1[0][1],  0., 0.],
-                                     [0., 0.,  0.,s1[0][0], 0.,  0.,s1[1][1],  0., s1[2][2],  0., 0.,2*s1[0][2],0.],
-                                     [0., 0.,  0., 0.,  0., 0.,  0.,   0.,  0.,  0.,   2*s1[1][2], 0.,  2*s1[0][1]]])
+                                  [0., s1[0][0], 0., 0., s1[1][1], s1[2][2], 2*s1[0][2], 0., 0., 0., 0., 0., 0.],
+                                  [0., 0., s1[0][0], 0.,  0., s1[1][1], 0.,s1[2][2], 2*s1[0][2], 0., 0., 0., 0.],
+                                  [0., 0.,  0.,  0., 0.,  0.,  0.,  0.,  0.,  2*s1[1][2],   2*s1[0][1],  0., 0.],
+                                  [0., 0.,  0.,s1[0][0], 0.,  0.,s1[1][1],  0., s1[2][2],  0., 0.,2*s1[0][2],0.],
+                                  [0., 0.,  0., 0.,  0., 0.,  0.,   0.,  0.,  0.,   2*s1[1][2], 0.,  2*s1[0][1]]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[2]],
-                                     [stress_list1[3]],
-                                     [stress_list1[4]],
-                                     [stress_list1[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]]])
         else:        
             s1 = strain_matrix(latt_system, up)[0]
             s2 = strain_matrix(latt_system, up)[1]
@@ -676,54 +676,54 @@ def Monoclinic(latt_system, elastic_constants_dict, stress_set_dict, convertion_
             #stress_list5 = array(stress_set_dict[up][4])
 
             eplisons_now = array([[s1[0][0], s1[1][1], s1[2][2], 2*s1[0][2], 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., s1[0][0], 0., 0., s1[1][1], s1[2][2], 2*s1[0][2], 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., s1[0][0], 0.,  0., s1[1][1], 0.,s1[2][2], 2*s1[0][2], 0., 0., 0., 0.],
-                                     [0., 0.,  0.,  0., 0.,  0.,  0.,  0.,  0.,  2*s1[1][2],   2*s1[0][1],  0., 0.],
-                                     [0., 0.,  0.,s1[0][0], 0.,  0.,s1[1][1],  0., s1[2][2],  0., 0.,2*s1[0][2],0.],
-                                     [0., 0.,  0., 0.,  0., 0.,  0.,   0.,  0.,  0.,   2*s1[1][2], 0.,  2*s1[0][1]],
-                                     [s2[0][0], s2[1][1], s2[2][2], 2*s2[0][2], 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., s2[0][0], 0., 0., s2[1][1], s2[2][2], 2*s2[0][2], 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., s2[0][0], 0.,  0., s2[1][1], 0.,s2[2][2], 2*s2[0][2], 0., 0., 0., 0.],
-                                     [0., 0.,  0.,  0., 0.,  0.,  0.,  0.,  0.,  2*s2[1][2],   2*s2[0][1],  0., 0.],
-                                     [0., 0.,  0.,s2[0][0], 0.,  0.,s2[1][1],  0., s2[2][2],  0., 0.,2*s2[0][2],0.],
-                                     [0., 0.,  0., 0.,  0., 0.,  0.,   0.,  0.,  0.,   2*s2[1][2], 0.,  2*s2[0][1]],
-                                     [s3[0][0], s3[1][1], s3[2][2], 2*s3[0][2], 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., s3[0][0], 0., 0., s3[1][1], s3[2][2], 2*s3[0][2], 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., s3[0][0], 0.,  0., s3[1][1], 0.,s3[2][2], 2*s3[0][2], 0., 0., 0., 0.],
-                                     [0., 0.,  0.,  0., 0.,  0.,  0.,  0.,  0.,  2*s3[1][2],   2*s3[0][1],  0., 0.],
-                                     [0., 0.,  0.,s3[0][0], 0.,  0.,s3[1][1],  0., s3[2][2],  0., 0.,2*s3[0][2],0.],
-                                     [0., 0.,  0., 0.,  0., 0.,  0.,   0.,  0.,  0.,   2*s3[1][2], 0.,  2*s3[0][1]],
-                                     [s4[0][0], s4[1][1], s4[2][2], 2*s4[0][2], 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., s4[0][0], 0., 0., s4[1][1], s4[2][2], 2*s4[0][2], 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., s4[0][0], 0.,  0., s4[1][1], 0.,s4[2][2], 2*s4[0][2], 0., 0., 0., 0.],
-                                     [0., 0.,  0.,  0., 0.,  0.,  0.,  0.,  0.,  2*s4[1][2],   2*s4[0][1],  0., 0.],
-                                     [0., 0.,  0.,s4[0][0], 0.,  0.,s4[1][1],  0., s4[2][2],  0., 0.,2*s4[0][2],0.],
-                                     [0., 0.,  0., 0.,  0., 0.,  0.,   0.,  0.,  0.,   2*s4[1][2], 0.,  2*s4[0][1]]])
+                                  [0., s1[0][0], 0., 0., s1[1][1], s1[2][2], 2*s1[0][2], 0., 0., 0., 0., 0., 0.],
+                                  [0., 0., s1[0][0], 0.,  0., s1[1][1], 0.,s1[2][2], 2*s1[0][2], 0., 0., 0., 0.],
+                                  [0., 0.,  0.,  0., 0.,  0.,  0.,  0.,  0.,  2*s1[1][2],   2*s1[0][1],  0., 0.],
+                                  [0., 0.,  0.,s1[0][0], 0.,  0.,s1[1][1],  0., s1[2][2],  0., 0.,2*s1[0][2],0.],
+                                  [0., 0.,  0., 0.,  0., 0.,  0.,   0.,  0.,  0.,   2*s1[1][2], 0.,  2*s1[0][1]],
+                                  [s2[0][0], s2[1][1], s2[2][2], 2*s2[0][2], 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                  [0., s2[0][0], 0., 0., s2[1][1], s2[2][2], 2*s2[0][2], 0., 0., 0., 0., 0., 0.],
+                                  [0., 0., s2[0][0], 0.,  0., s2[1][1], 0.,s2[2][2], 2*s2[0][2], 0., 0., 0., 0.],
+                                  [0., 0.,  0.,  0., 0.,  0.,  0.,  0.,  0.,  2*s2[1][2],   2*s2[0][1],  0., 0.],
+                                  [0., 0.,  0.,s2[0][0], 0.,  0.,s2[1][1],  0., s2[2][2],  0., 0.,2*s2[0][2],0.],
+                                  [0., 0.,  0., 0.,  0., 0.,  0.,   0.,  0.,  0.,   2*s2[1][2], 0.,  2*s2[0][1]],
+                                  [s3[0][0], s3[1][1], s3[2][2], 2*s3[0][2], 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                  [0., s3[0][0], 0., 0., s3[1][1], s3[2][2], 2*s3[0][2], 0., 0., 0., 0., 0., 0.],
+                                  [0., 0., s3[0][0], 0.,  0., s3[1][1], 0.,s3[2][2], 2*s3[0][2], 0., 0., 0., 0.],
+                                  [0., 0.,  0.,  0., 0.,  0.,  0.,  0.,  0.,  2*s3[1][2],   2*s3[0][1],  0., 0.],
+                                  [0., 0.,  0.,s3[0][0], 0.,  0.,s3[1][1],  0., s3[2][2],  0., 0.,2*s3[0][2],0.],
+                                  [0., 0.,  0., 0.,  0., 0.,  0.,   0.,  0.,  0.,   2*s3[1][2], 0.,  2*s3[0][1]],
+                                  [s4[0][0], s4[1][1], s4[2][2], 2*s4[0][2], 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                  [0., s4[0][0], 0., 0., s4[1][1], s4[2][2], 2*s4[0][2], 0., 0., 0., 0., 0., 0.],
+                                  [0., 0., s4[0][0], 0.,  0., s4[1][1], 0.,s4[2][2], 2*s4[0][2], 0., 0., 0., 0.],
+                                  [0., 0.,  0.,  0., 0.,  0.,  0.,  0.,  0.,  2*s4[1][2],   2*s4[0][1],  0., 0.],
+                                  [0., 0.,  0.,s4[0][0], 0.,  0.,s4[1][1],  0., s4[2][2],  0., 0.,2*s4[0][2],0.],
+                                  [0., 0.,  0., 0.,  0., 0.,  0.,   0.,  0.,  0.,   2*s4[1][2], 0.,  2*s4[0][1]]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[2]],
-                                     [stress_list1[3]],
-                                     [stress_list1[4]],
-                                     [stress_list1[5]],
-                                     [stress_list2[0]],
-                                     [stress_list2[1]],
-                                     [stress_list2[2]],
-                                     [stress_list2[3]],
-                                     [stress_list2[4]],
-                                     [stress_list2[5]],
-                                     [stress_list3[0]],
-                                     [stress_list3[1]],
-                                     [stress_list3[2]],
-                                     [stress_list3[3]],
-                                     [stress_list3[4]],
-                                     [stress_list3[5]],
-                                     [stress_list4[0]],
-                                     [stress_list4[1]],
-                                     [stress_list4[2]],
-                                     [stress_list4[3]],
-                                     [stress_list4[4]],
-                                     [stress_list4[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]],
+                                  [stress_list2[0]],
+                                  [stress_list2[1]],
+                                  [stress_list2[2]],
+                                  [stress_list2[3]],
+                                  [stress_list2[4]],
+                                  [stress_list2[5]],
+                                  [stress_list3[0]],
+                                  [stress_list3[1]],
+                                  [stress_list3[2]],
+                                  [stress_list3[3]],
+                                  [stress_list3[4]],
+                                  [stress_list3[5]],
+                                  [stress_list4[0]],
+                                  [stress_list4[1]],
+                                  [stress_list4[2]],
+                                  [stress_list4[3]],
+                                  [stress_list4[4]],
+                                  [stress_list4[5]]])
         if n == 0:
             eplisons = deepcopy(eplisons_now)
             stresses = deepcopy(stresses_now)
@@ -731,7 +731,7 @@ def Monoclinic(latt_system, elastic_constants_dict, stress_set_dict, convertion_
             eplisons = vstack((eplisons, eplisons_now))
             stresses = vstack((stresses, stresses_now))
             
-    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * convertion_factor
+    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * conversion_factor
     c11 = cij[0][0]
     c12 = cij[1][0]
     c13 = cij[2][0]
@@ -792,18 +792,18 @@ def Monoclinic(latt_system, elastic_constants_dict, stress_set_dict, convertion_
     return elastic_constants_dict
 
 
-def Triclinic(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor):
+def Triclinic(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
     for n, up in enumerate(stress_set_dict.keys()):
         if up == 0:
             s1 = strain_matrix(latt_system, up)[0]
             stress_list1 = array(stress_set_dict[up][0])
 
             eplisons_now = array([[s1[0][0], s1[1][1], s1[2][2],2*s1[1][2],2*s1[0][2],2*s1[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., s1[0][0], 0., 0., 0., 0., s1[1][1], s1[2][2],2*s1[1][2],2*s1[0][2],2*s1[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2],2*s1[1][2],2*s1[0][2],2*s1[0][1], 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2], 0., 0.,2*s1[1][2],2*s1[0][2],2*s1[0][1], 0., 0., 0.],
-                                     [0., 0., 0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2], 0., 0.,2*s1[1][2], 0.,2*s1[0][2],2*s1[0][1], 0.],
-                                     [0., 0., 0., 0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2], 0.,0.,2*s1[1][2], 0.,2*s1[0][2], 2*s1[0][1]]])
+                                  [0., s1[0][0], 0., 0., 0., 0., s1[1][1], s1[2][2],2*s1[1][2],2*s1[0][2],2*s1[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                  [0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2],2*s1[1][2],2*s1[0][2],2*s1[0][1], 0., 0., 0., 0., 0., 0.],
+                                  [0., 0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2], 0., 0.,2*s1[1][2],2*s1[0][2],2*s1[0][1], 0., 0., 0.],
+                                  [0., 0., 0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2], 0., 0.,2*s1[1][2], 0.,2*s1[0][2],2*s1[0][1], 0.],
+                                  [0., 0., 0., 0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2], 0.,0.,2*s1[1][2], 0.,2*s1[0][2], 2*s1[0][1]]])
 
             stresses_now = array([[stress_list1[0]],
                                      [stress_list1[1]],
@@ -826,78 +826,78 @@ def Triclinic(latt_system, elastic_constants_dict, stress_set_dict, convertion_f
             stress_list6 = array(stress_set_dict[up][5])
 
             eplisons_now = array([[s1[0][0], s1[1][1], s1[2][2],2*s1[1][2],2*s1[0][2],2*s1[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., s1[0][0], 0., 0., 0., 0., s1[1][1], s1[2][2],2*s1[1][2],2*s1[0][2],2*s1[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2],2*s1[1][2],2*s1[0][2],2*s1[0][1], 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2], 0., 0.,2*s1[1][2],2*s1[0][2],2*s1[0][1], 0., 0., 0.],
-                                     [0., 0., 0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2], 0., 0.,2*s1[1][2], 0.,2*s1[0][2],2*s1[0][1], 0.],
-                                     [0., 0., 0., 0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2], 0.,0.,2*s1[1][2], 0.,2*s1[0][2], 2*s1[0][1]],
-                                     [s2[0][0], s2[1][1], s2[2][2],2*s2[1][2],2*s2[0][2],2*s2[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., s2[0][0], 0., 0., 0., 0., s2[1][1], s2[2][2],2*s2[1][2],2*s2[0][2],2*s2[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., s2[0][0], 0., 0., 0., 0., s2[1][1], 0., 0., 0., s2[2][2],2*s2[1][2],2*s2[0][2],2*s2[0][1], 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., 0., s2[0][0], 0., 0., 0., 0., s2[1][1], 0., 0., 0., s2[2][2], 0., 0.,2*s2[1][2],2*s2[0][2],2*s2[0][1], 0., 0., 0.],
-                                     [0., 0., 0., 0., s2[0][0], 0., 0., 0., 0., s2[1][1], 0., 0., 0., s2[2][2], 0., 0.,2*s2[1][2], 0.,2*s2[0][2],2*s2[0][1], 0.],
-                                     [0., 0., 0., 0., 0., s2[0][0], 0., 0., 0., 0., s2[1][1], 0., 0., 0., s2[2][2], 0.,0.,2*s2[1][2], 0.,2*s2[0][2], 2*s2[0][1]],
-                                     [s3[0][0], s3[1][1], s3[2][2],2*s3[1][2],2*s3[0][2],2*s3[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., s3[0][0], 0., 0., 0., 0., s3[1][1], s3[2][2],2*s3[1][2],2*s3[0][2],2*s3[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., s3[0][0], 0., 0., 0., 0., s3[1][1], 0., 0., 0., s3[2][2],2*s3[1][2],2*s3[0][2],2*s3[0][1], 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., 0., s3[0][0], 0., 0., 0., 0., s3[1][1], 0., 0., 0., s3[2][2], 0., 0.,2*s3[1][2],2*s3[0][2],2*s3[0][1], 0., 0., 0.],
-                                     [0., 0., 0., 0., s3[0][0], 0., 0., 0., 0., s3[1][1], 0., 0., 0., s3[2][2], 0., 0.,2*s3[1][2], 0.,2*s3[0][2],2*s3[0][1], 0.],
-                                     [0., 0., 0., 0., 0., s3[0][0], 0., 0., 0., 0., s3[1][1], 0., 0., 0., s3[2][2], 0.,0.,2*s3[1][2], 0.,2*s3[0][2], 2*s3[0][1]],
-                                     [s4[0][0], s4[1][1], s4[2][2],2*s4[1][2],2*s4[0][2],2*s4[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., s4[0][0], 0., 0., 0., 0., s4[1][1], s4[2][2],2*s4[1][2],2*s4[0][2],2*s4[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., s4[0][0], 0., 0., 0., 0., s4[1][1], 0., 0., 0., s4[2][2],2*s4[1][2],2*s4[0][2],2*s4[0][1], 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., 0., s4[0][0], 0., 0., 0., 0., s4[1][1], 0., 0., 0., s4[2][2], 0., 0.,2*s4[1][2],2*s4[0][2],2*s4[0][1], 0., 0., 0.],
-                                     [0., 0., 0., 0., s4[0][0], 0., 0., 0., 0., s4[1][1], 0., 0., 0., s4[2][2], 0., 0.,2*s4[1][2], 0.,2*s4[0][2],2*s4[0][1], 0.],
-                                     [0., 0., 0., 0., 0., s4[0][0], 0., 0., 0., 0., s4[1][1], 0., 0., 0., s4[2][2], 0.,0.,2*s4[1][2], 0.,2*s4[0][2], 2*s4[0][1]],
-                                     [s5[0][0], s5[1][1], s5[2][2],2*s5[1][2],2*s5[0][2],2*s5[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., s5[0][0], 0., 0., 0., 0., s5[1][1], s5[2][2],2*s5[1][2],2*s5[0][2],2*s5[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., s5[0][0], 0., 0., 0., 0., s5[1][1], 0., 0., 0., s5[2][2],2*s5[1][2],2*s5[0][2],2*s5[0][1], 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., 0., s5[0][0], 0., 0., 0., 0., s5[1][1], 0., 0., 0., s5[2][2], 0., 0.,2*s5[1][2],2*s5[0][2],2*s5[0][1], 0., 0., 0.],
-                                     [0., 0., 0., 0., s5[0][0], 0., 0., 0., 0., s5[1][1], 0., 0., 0., s5[2][2], 0., 0.,2*s5[1][2], 0.,2*s5[0][2],2*s5[0][1], 0.],
-                                     [0., 0., 0., 0., 0., s5[0][0], 0., 0., 0., 0., s5[1][1], 0., 0., 0., s5[2][2], 0.,0.,2*s5[1][2], 0.,2*s5[0][2], 2*s5[0][1]],
-                                     [s6[0][0], s6[1][1], s6[2][2],2*s6[1][2],2*s6[0][2],2*s6[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., s6[0][0], 0., 0., 0., 0., s6[1][1], s6[2][2],2*s6[1][2],2*s6[0][2],2*s6[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., s6[0][0], 0., 0., 0., 0., s6[1][1], 0., 0., 0., s6[2][2],2*s6[1][2],2*s6[0][2],2*s6[0][1], 0., 0., 0., 0., 0., 0.],
-                                     [0., 0., 0., s6[0][0], 0., 0., 0., 0., s6[1][1], 0., 0., 0., s6[2][2], 0., 0.,2*s6[1][2],2*s6[0][2],2*s6[0][1], 0., 0., 0.],
-                                     [0., 0., 0., 0., s6[0][0], 0., 0., 0., 0., s6[1][1], 0., 0., 0., s6[2][2], 0., 0.,2*s6[1][2], 0.,2*s6[0][2],2*s6[0][1], 0.],
-                                     [0., 0., 0., 0., 0., s6[0][0], 0., 0., 0., 0., s6[1][1], 0., 0., 0., s6[2][2], 0.,0.,2*s6[1][2], 0.,2*s6[0][2], 2*s6[0][1]]])
+                                 [0., s1[0][0], 0., 0., 0., 0., s1[1][1], s1[2][2],2*s1[1][2],2*s1[0][2],2*s1[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                 [0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2],2*s1[1][2],2*s1[0][2],2*s1[0][1], 0., 0., 0., 0., 0., 0.],
+                                 [0., 0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2], 0., 0.,2*s1[1][2],2*s1[0][2],2*s1[0][1], 0., 0., 0.],
+                                 [0., 0., 0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2], 0., 0.,2*s1[1][2], 0.,2*s1[0][2],2*s1[0][1], 0.],
+                                 [0., 0., 0., 0., 0., s1[0][0], 0., 0., 0., 0., s1[1][1], 0., 0., 0., s1[2][2], 0.,0.,2*s1[1][2], 0.,2*s1[0][2], 2*s1[0][1]],
+                                 [s2[0][0], s2[1][1], s2[2][2],2*s2[1][2],2*s2[0][2],2*s2[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                 [0., s2[0][0], 0., 0., 0., 0., s2[1][1], s2[2][2],2*s2[1][2],2*s2[0][2],2*s2[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                 [0., 0., s2[0][0], 0., 0., 0., 0., s2[1][1], 0., 0., 0., s2[2][2],2*s2[1][2],2*s2[0][2],2*s2[0][1], 0., 0., 0., 0., 0., 0.],
+                                 [0., 0., 0., s2[0][0], 0., 0., 0., 0., s2[1][1], 0., 0., 0., s2[2][2], 0., 0.,2*s2[1][2],2*s2[0][2],2*s2[0][1], 0., 0., 0.],
+                                 [0., 0., 0., 0., s2[0][0], 0., 0., 0., 0., s2[1][1], 0., 0., 0., s2[2][2], 0., 0.,2*s2[1][2], 0.,2*s2[0][2],2*s2[0][1], 0.],
+                                 [0., 0., 0., 0., 0., s2[0][0], 0., 0., 0., 0., s2[1][1], 0., 0., 0., s2[2][2], 0.,0.,2*s2[1][2], 0.,2*s2[0][2], 2*s2[0][1]],
+                                 [s3[0][0], s3[1][1], s3[2][2],2*s3[1][2],2*s3[0][2],2*s3[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                 [0., s3[0][0], 0., 0., 0., 0., s3[1][1], s3[2][2],2*s3[1][2],2*s3[0][2],2*s3[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                 [0., 0., s3[0][0], 0., 0., 0., 0., s3[1][1], 0., 0., 0., s3[2][2],2*s3[1][2],2*s3[0][2],2*s3[0][1], 0., 0., 0., 0., 0., 0.],
+                                 [0., 0., 0., s3[0][0], 0., 0., 0., 0., s3[1][1], 0., 0., 0., s3[2][2], 0., 0.,2*s3[1][2],2*s3[0][2],2*s3[0][1], 0., 0., 0.],
+                                 [0., 0., 0., 0., s3[0][0], 0., 0., 0., 0., s3[1][1], 0., 0., 0., s3[2][2], 0., 0.,2*s3[1][2], 0.,2*s3[0][2],2*s3[0][1], 0.],
+                                 [0., 0., 0., 0., 0., s3[0][0], 0., 0., 0., 0., s3[1][1], 0., 0., 0., s3[2][2], 0.,0.,2*s3[1][2], 0.,2*s3[0][2], 2*s3[0][1]],
+                                 [s4[0][0], s4[1][1], s4[2][2],2*s4[1][2],2*s4[0][2],2*s4[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                 [0., s4[0][0], 0., 0., 0., 0., s4[1][1], s4[2][2],2*s4[1][2],2*s4[0][2],2*s4[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                 [0., 0., s4[0][0], 0., 0., 0., 0., s4[1][1], 0., 0., 0., s4[2][2],2*s4[1][2],2*s4[0][2],2*s4[0][1], 0., 0., 0., 0., 0., 0.],
+                                 [0., 0., 0., s4[0][0], 0., 0., 0., 0., s4[1][1], 0., 0., 0., s4[2][2], 0., 0.,2*s4[1][2],2*s4[0][2],2*s4[0][1], 0., 0., 0.],
+                                 [0., 0., 0., 0., s4[0][0], 0., 0., 0., 0., s4[1][1], 0., 0., 0., s4[2][2], 0., 0.,2*s4[1][2], 0.,2*s4[0][2],2*s4[0][1], 0.],
+                                 [0., 0., 0., 0., 0., s4[0][0], 0., 0., 0., 0., s4[1][1], 0., 0., 0., s4[2][2], 0.,0.,2*s4[1][2], 0.,2*s4[0][2], 2*s4[0][1]],
+                                 [s5[0][0], s5[1][1], s5[2][2],2*s5[1][2],2*s5[0][2],2*s5[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                 [0., s5[0][0], 0., 0., 0., 0., s5[1][1], s5[2][2],2*s5[1][2],2*s5[0][2],2*s5[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                 [0., 0., s5[0][0], 0., 0., 0., 0., s5[1][1], 0., 0., 0., s5[2][2],2*s5[1][2],2*s5[0][2],2*s5[0][1], 0., 0., 0., 0., 0., 0.],
+                                 [0., 0., 0., s5[0][0], 0., 0., 0., 0., s5[1][1], 0., 0., 0., s5[2][2], 0., 0.,2*s5[1][2],2*s5[0][2],2*s5[0][1], 0., 0., 0.],
+                                 [0., 0., 0., 0., s5[0][0], 0., 0., 0., 0., s5[1][1], 0., 0., 0., s5[2][2], 0., 0.,2*s5[1][2], 0.,2*s5[0][2],2*s5[0][1], 0.],
+                                 [0., 0., 0., 0., 0., s5[0][0], 0., 0., 0., 0., s5[1][1], 0., 0., 0., s5[2][2], 0.,0.,2*s5[1][2], 0.,2*s5[0][2], 2*s5[0][1]],
+                                 [s6[0][0], s6[1][1], s6[2][2],2*s6[1][2],2*s6[0][2],2*s6[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                 [0., s6[0][0], 0., 0., 0., 0., s6[1][1], s6[2][2],2*s6[1][2],2*s6[0][2],2*s6[0][1], 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                 [0., 0., s6[0][0], 0., 0., 0., 0., s6[1][1], 0., 0., 0., s6[2][2],2*s6[1][2],2*s6[0][2],2*s6[0][1], 0., 0., 0., 0., 0., 0.],
+                                 [0., 0., 0., s6[0][0], 0., 0., 0., 0., s6[1][1], 0., 0., 0., s6[2][2], 0., 0.,2*s6[1][2],2*s6[0][2],2*s6[0][1], 0., 0., 0.],
+                                 [0., 0., 0., 0., s6[0][0], 0., 0., 0., 0., s6[1][1], 0., 0., 0., s6[2][2], 0., 0.,2*s6[1][2], 0.,2*s6[0][2],2*s6[0][1], 0.],
+                                 [0., 0., 0., 0., 0., s6[0][0], 0., 0., 0., 0., s6[1][1], 0., 0., 0., s6[2][2], 0.,0.,2*s6[1][2], 0.,2*s6[0][2], 2*s6[0][1]]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[2]],
-                                     [stress_list1[3]],
-                                     [stress_list1[4]],
-                                     [stress_list1[5]],
-                                     [stress_list2[0]],
-                                     [stress_list2[1]],
-                                     [stress_list2[2]],
-                                     [stress_list2[3]],
-                                     [stress_list2[4]],
-                                     [stress_list2[5]],
-                                     [stress_list3[0]],
-                                     [stress_list3[1]],
-                                     [stress_list3[2]],
-                                     [stress_list3[3]],
-                                     [stress_list3[4]],
-                                     [stress_list3[5]],
-                                     [stress_list4[0]],
-                                     [stress_list4[1]],
-                                     [stress_list4[2]],
-                                     [stress_list4[3]],
-                                     [stress_list4[4]],
-                                     [stress_list4[5]],
-                                     [stress_list5[0]],
-                                     [stress_list5[1]],
-                                     [stress_list5[2]],
-                                     [stress_list5[3]],
-                                     [stress_list5[4]],
-                                     [stress_list5[5]],
-                                     [stress_list6[0]],
-                                     [stress_list6[1]],
-                                     [stress_list6[2]],
-                                     [stress_list6[3]],
-                                     [stress_list6[4]],
-                                     [stress_list6[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]],
+                                  [stress_list2[0]],
+                                  [stress_list2[1]],
+                                  [stress_list2[2]],
+                                  [stress_list2[3]],
+                                  [stress_list2[4]],
+                                  [stress_list2[5]],
+                                  [stress_list3[0]],
+                                  [stress_list3[1]],
+                                  [stress_list3[2]],
+                                  [stress_list3[3]],
+                                  [stress_list3[4]],
+                                  [stress_list3[5]],
+                                  [stress_list4[0]],
+                                  [stress_list4[1]],
+                                  [stress_list4[2]],
+                                  [stress_list4[3]],
+                                  [stress_list4[4]],
+                                  [stress_list4[5]],
+                                  [stress_list5[0]],
+                                  [stress_list5[1]],
+                                  [stress_list5[2]],
+                                  [stress_list5[3]],
+                                  [stress_list5[4]],
+                                  [stress_list5[5]],
+                                  [stress_list6[0]],
+                                  [stress_list6[1]],
+                                  [stress_list6[2]],
+                                  [stress_list6[3]],
+                                  [stress_list6[4]],
+                                  [stress_list6[5]]])
         if n == 0:
             eplisons = deepcopy(eplisons_now)
             stresses = deepcopy(stresses_now)
@@ -905,7 +905,7 @@ def Triclinic(latt_system, elastic_constants_dict, stress_set_dict, convertion_f
             eplisons = vstack((eplisons, eplisons_now))
             stresses = vstack((stresses, stresses_now))
             
-    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * convertion_factor
+    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * conversion_factor
 
     c11 = cij[0][0]
     c12 = cij[1][0]
@@ -954,7 +954,7 @@ def Triclinic(latt_system, elastic_constants_dict, stress_set_dict, convertion_f
     return elastic_constants_dict
 
 
-def isotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, convertion_factor):
+def isotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
     for n, up in enumerate(stress_set_dict.keys()):
         s = strain_matrix(latt_system, up)[0]
         #print(s)
@@ -962,12 +962,12 @@ def isotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict
         stress_list = array(stress_set_dict[up][0])
 
         eplisons_now = array([[s[0][0],   s[1][1]],
-                                 [s[1][1],   s[0][0]],
-                                 [s[0][1],  -s[0][1]]])
+                              [s[1][1],   s[0][0]],
+                              [s[0][1],  -s[0][1]]])
 
         stresses_now = array([[stress_list[0]],
-                                 [stress_list[1]],
-                                 [stress_list[5]]])
+                              [stress_list[1]],
+                              [stress_list[5]]])
         if n == 0:
             eplisons = deepcopy(eplisons_now)
             stresses = deepcopy(stresses_now)
@@ -975,7 +975,7 @@ def isotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict
             eplisons = vstack((eplisons, eplisons_now))
             stresses = vstack((stresses, stresses_now))
 
-    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * convertion_factor
+    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * conversion_factor
     lenth_angl = pos_optimized.get_cell_lengths_and_angles()
 
     elastic_constants_dict['c11'] = cij[0][0] * lenth_angl[2] / 10.
@@ -984,19 +984,19 @@ def isotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict
     return elastic_constants_dict
 
 
-def tetragonal(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, convertion_factor):
+def tetragonal(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
     for n, up in enumerate(stress_set_dict.keys()):
         s = strain_matrix(latt_system, up)[0]
 
         stress_list = array(stress_set_dict[up][0])
 
         eplisons_now = array([[s[0][0], s[1][1], 0.],
-                                 [s[1][1], s[0][0], 0.],
-                                 [0.,   0.,  2*s[0][1]]])
+                              [s[1][1], s[0][0], 0.],
+                              [0.,   0.,  2*s[0][1]]])
 
         stresses_now = array([[stress_list[0]],
-                                 [stress_list[1]],
-                                 [stress_list[5]]])
+                              [stress_list[1]],
+                              [stress_list[5]]])
         if n == 0:
             eplisons = deepcopy(eplisons_now)
             stresses = deepcopy(stresses_now)
@@ -1004,7 +1004,7 @@ def tetragonal(pos_optimized, latt_system, elastic_constants_dict, stress_set_di
             eplisons = vstack((eplisons, eplisons_now))
             stresses = vstack((stresses, stresses_now))
 
-    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * convertion_factor
+    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * conversion_factor
     lenth_angl = pos_optimized.get_cell_lengths_and_angles()
 
     elastic_constants_dict['c11'] = cij[0][0] * lenth_angl[2] / 10.
@@ -1014,18 +1014,18 @@ def tetragonal(pos_optimized, latt_system, elastic_constants_dict, stress_set_di
     return elastic_constants_dict
 
 
-def orthotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, convertion_factor):
+def orthotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
     for n, up in enumerate(stress_set_dict.keys()):
         if up == 0:
             s1 = strain_matrix(latt_system, up)[0]
             stress_list1 = array(stress_set_dict[up][0])
             eplisons_now = array([[s1[0][0], s1[1][1], 0., 0.],
-                                     [0., s1[0][0], s1[1][1], 0.],
-                                     [0.,   0.,  0.,  2*s1[0][1]]])
+                                  [0., s1[0][0], s1[1][1], 0.],
+                                  [0.,   0.,  0.,  2*s1[0][1]]])
             
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[5]]])
         else:
             s1 = strain_matrix(latt_system, up)[0]
             s2 = strain_matrix(latt_system, up)[1]
@@ -1034,18 +1034,18 @@ def orthotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_di
             stress_list2 = array(stress_set_dict[up][1])
 
             eplisons_now = array([[s1[0][0], s1[1][1], 0., 0.],
-                                     [0., s1[0][0], s1[1][1], 0.],
-                                     [0.,   0.,  0.,  2*s1[0][1]],
-                                     [s2[0][0], s2[1][1], 0., 0.],
-                                     [0., s2[0][0], s2[1][1], 0.],
-                                     [0.,   0.,  0.,  2*s2[0][1]]])
+                                  [0., s1[0][0], s1[1][1], 0.],
+                                  [0.,   0.,  0.,  2*s1[0][1]],
+                                  [s2[0][0], s2[1][1], 0., 0.],
+                                  [0., s2[0][0], s2[1][1], 0.],
+                                  [0.,   0.,  0.,  2*s2[0][1]]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[5]],
-                                     [stress_list2[0]],
-                                     [stress_list2[1]],
-                                     [stress_list2[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[5]],
+                                  [stress_list2[0]],
+                                  [stress_list2[1]],
+                                  [stress_list2[5]]])
         if n == 0:
             eplisons = deepcopy(eplisons_now)
             stresses = deepcopy(stresses_now)
@@ -1053,7 +1053,7 @@ def orthotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_di
             eplisons = vstack((eplisons, eplisons_now))
             stresses = vstack((stresses, stresses_now))
 
-    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * convertion_factor
+    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * conversion_factor
     lenth_angl = pos_optimized.get_cell_lengths_and_angles()
 
     elastic_constants_dict['c11'] = cij[0][0] * lenth_angl[2] / 10.
@@ -1064,19 +1064,19 @@ def orthotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_di
     return elastic_constants_dict
 
 
-def anisotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, convertion_factor):
+def anisotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
     for n, up in enumerate(stress_set_dict.keys()):
         if up == 0:
             s1 = strain_matrix(latt_system, up)[0]
             stress_list1 = array(stress_set_dict[up][0])
 
             eplisons_now = array([[s1[0][0], s1[1][1], 2*s1[0][1], 0., 0., 0.],
-                                     [0., s1[0][0], 0., s1[1][1], 2*s1[0][1], 0.],
-                                     [0., 0., s1[0][0], 0., s1[1][1], 2*s1[0][1]]])
+                                  [0., s1[0][0], 0., s1[1][1], 2*s1[0][1], 0.],
+                                  [0., 0., s1[0][0], 0., s1[1][1], 2*s1[0][1]]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[5]]])
         else:
             s1 = strain_matrix(latt_system, up)[0]
             s2 = strain_matrix(latt_system, up)[1]
@@ -1087,24 +1087,24 @@ def anisotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_di
             stress_list3 = array(stress_set_dict[up][2])
 
             eplisons_now = array([[s1[0][0], s1[1][1], 2*s1[0][1], 0., 0., 0.],
-                                     [0., s1[0][0], 0., s1[1][1], 2*s1[0][1], 0.],
-                                     [0., 0., s1[0][0], 0., s1[1][1], 2*s1[0][1]],
-                                     [s2[0][0], s2[1][1], 2*s2[0][1], 0., 0., 0.],
-                                     [0., s2[0][0], 0., s2[1][1], 2*s2[0][1], 0.],
-                                     [0., 0., s2[0][0], 0., s2[1][1], 2*s2[0][1]],
-                                     [s3[0][0], s3[1][1], 2*s3[0][1], 0., 0., 0.],
-                                     [0., s3[0][0], 0., s3[1][1], 2*s3[0][1], 0.],
-                                     [0., 0., s3[0][0], 0., s3[1][1], 2*s3[0][1]]])
+                                  [0., s1[0][0], 0., s1[1][1], 2*s1[0][1], 0.],
+                                  [0., 0., s1[0][0], 0., s1[1][1], 2*s1[0][1]],
+                                  [s2[0][0], s2[1][1], 2*s2[0][1], 0., 0., 0.],
+                                  [0., s2[0][0], 0., s2[1][1], 2*s2[0][1], 0.],
+                                  [0., 0., s2[0][0], 0., s2[1][1], 2*s2[0][1]],
+                                  [s3[0][0], s3[1][1], 2*s3[0][1], 0., 0., 0.],
+                                  [0., s3[0][0], 0., s3[1][1], 2*s3[0][1], 0.],
+                                  [0., 0., s3[0][0], 0., s3[1][1], 2*s3[0][1]]])
 
             stresses_now = array([[stress_list1[0]],
-                                     [stress_list1[1]],
-                                     [stress_list1[5]],
-                                     [stress_list2[0]],
-                                     [stress_list2[1]],
-                                     [stress_list2[5]],
-                                     [stress_list3[0]],
-                                     [stress_list3[1]],
-                                     [stress_list3[5]]])
+                                  [stress_list1[1]],
+                                  [stress_list1[5]],
+                                  [stress_list2[0]],
+                                  [stress_list2[1]],
+                                  [stress_list2[5]],
+                                  [stress_list3[0]],
+                                  [stress_list3[1]],
+                                  [stress_list3[5]]])
         if n == 0:
             eplisons = deepcopy(eplisons_now)
             stresses = deepcopy(stresses_now)
@@ -1112,7 +1112,7 @@ def anisotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_di
             eplisons = vstack((eplisons, eplisons_now))
             stresses = vstack((stresses, stresses_now))
 
-    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * convertion_factor
+    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * conversion_factor
     lenth_angl = pos_optimized.get_cell_lengths_and_angles()
 
     elastic_constants_dict['c11'] = cij[0][0] * lenth_angl[2] / 10.
@@ -1125,57 +1125,702 @@ def anisotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_di
     return elastic_constants_dict
 
 
+def any1D(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, convertion_factor):
+    stresses = []
+    strains = []
+        
+
+    for key in stress_set_dict.keys():
+        s = strain_matrix(latt_system, key)[0]
+        current_stress_list = array(stress_set_dict[key][0])
+                              
+        current_strains = array([[s[0][0], s[0][1], s[0][2]],  # longitudinal
+                                     [s[1][0], s[1][1], s[1][2]],  # circumferential
+                                     [s[2][0], s[2][1], s[2][2]]]) # torsional
+
+        current_stresses = np.array([[current_stress_list[0]],  # Longitudinal stress (σzz)
+                                     [current_stress_list[1]],  # Circumferential stress (σrr)
+                                     [current_stress_list[2]]])  # Shear stress (τrz)
+                              
+                              
+                              
+        strains.append(current_strains)
+        stresses.append(current_stresses)
+        
+            
+    strains = vstack(strains)
+    stresses = vstack(stresses)
+            
+            
+    cij = linalg.lstsq(strains, stresses, rcond=None)[0] * convertion_factor
+    c33 = cij[2][0]
+    c23 = cij[1][0]
+
+
+    lenth_angl = pos_optimized.get_cell_lengths_and_angles()
+
+    elastic_constants_dict['c33'] = c33 #* lenth_angl[0] * lenth_angl[1] / 100.
+    elastic_constants_dict['c23'] = c23 #* lenth_angl[0] * lenth_angl[1] / 100.
+
+
+#    elastic_constants_dict['E'] = E
+#    elastic_constants_dict['v'] = v
+
+    return elastic_constants_dict
+
+
+def any1DModify(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
+    stresses = []
+    strains = []
+
+    
+    for key in stress_set_dict.keys():
+        s = strain_matrix(latt_system, key)[0]
+        current_stress_list = array(stress_set_dict[key][0])
+
+#        current_strains = array([[s[1][1], s[2][2]],
+#                                 [s[2][2], s[1][1]]])
+#        current_stresses = array([[current_stress_list[1]],
+#                                  [current_stress_list[2]]])
+
+
+        current_strains = array([[s[0][0], s[0][1], s[0][2]],  # longitudinal
+                                     [s[1][0], s[1][1], s[1][2]],  # circumferential
+                                     [s[2][0], s[2][1], s[2][2]]]) # torsional
+
+        current_stresses = np.array([[current_stress_list[0]],  # Longitudinal stress (σzz)
+                                     [current_stress_list[1]],  # Circumferential stress (σrr)
+                                     [current_stress_list[2]]])  # Shear stress (τrz)
+
+        strains.append(current_strains)
+        stresses.append(current_stresses)
+
+
+
+    strains = vstack(strains)
+    stresses = vstack(stresses)
+
+
+    cij = linalg.lstsq(strains, stresses, rcond=None)[0] * conversion_factor
+    print(cij)
+    #exit(1)
+    c22 = cij[2][0]
+    c23 = cij[1][0]
+    # E = c22 - c23*c23/c22
+    # v = c23/c22
+
+    lenth_angl = pos_optimized.get_cell_lengths_and_angles()
+
+    elastic_constants_dict['c22'] = c22 #* lenth_angl[0] * lenth_angl[1] / 100.
+    elastic_constants_dict['c23'] = c23 #* lenth_angl[0] * lenth_angl[1] / 100.
+
+
+#    elastic_constants_dict['E'] = E
+#    elastic_constants_dict['v'] = v
+
+    return elastic_constants_dict
+
+
+
+def true1D(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
+    stresses = []
+    strains = []
+
+    for key in stress_set_dict.keys():
+        s = strain_matrix(latt_system, key)[0]  # Getting the strain matrix
+        current_stress_list = array(stress_set_dict[key][0])
+
+        # Considering only the deformation in the 1D system
+        current_strains = array([s[0][0]])  
+        current_stresses = array([current_stress_list[0]])  # Considering only the relevant stress component
+
+        strains.append(current_strains)
+        stresses.append(current_stresses)
+
+    strains = vstack(strains)
+    stresses = vstack(stresses)
+
+    cij = linalg.lstsq(strains, stresses, rcond=None)[0] * conversion_factor
+
+
+    c11 = cij[0][0]  # Only one component in 1D with longitudinal strain
+
+    length = pos_optimized.get_cell_lengths_and_angles()[2]
+
+    elastic_constants_dict['c11'] = c11 #* length / 10.
+
+    return elastic_constants_dict
+
+
+
+
+
+# Example usage
+#original_value = 100  # Replace this with the original value you want to decrease
+#decrease_percent = 5  # Replace this with the desired percentage decrease
+#decreased_value = percent_decrease(original_value, decrease_percent)
+#print(f"The {decrease_percent} percent decreased value is: {decreased_value}")
+
+
+import numpy as np
+from numpy.linalg import lstsq
+
+
+import numpy as np
+
+import numpy as np
+
+def NanotubeJax(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
+    stresses = []
+    strains = []
+
+    # Loop over stress_set_dict to calculate strains and stresses for each key (strain type)
+    for key in stress_set_dict.keys():
+        s = strain_matrix(latt_system, key)[0]  # Getting the strain matrix
+        current_stress_list = np.array(stress_set_dict[key])
+
+        # Assuming the stress list is of size 3
+        if current_stress_list.size != 3:
+            raise ValueError("Error: Stress list should be of size 3.")
+        
+        current_stresses = current_stress_list.reshape(-1, 1)  # reshaping stress list to column vector
+
+        # Select appropriate strain matrix based on key
+        if key == "Longitudinal":
+            current_strains = np.array([[s[2][2], 0, 0],
+                                        [0, 0, 0],
+                                        [0, 0, 0]])
+        elif key == "Circumferential":
+            current_strains = np.array([[s[0][0], 0, 0],
+                                        [0, s[1][1], 0],
+                                        [0, 0, 0]])
+        elif key == "Torsional":
+            current_strains = np.array([[0, 0, s[0][2]],
+                                        [0, 0, 0],
+                                        [s[2][0], 0, 0]])
+        else:
+            raise ValueError("Error: Unrecognized strain type.")
+
+        strains.append(current_strains)
+        stresses.append(current_stresses)
+
+    # Stack the strains and stresses to form the matrices
+    strains = np.hstack(strains)
+    stresses = np.hstack(stresses)
+
+    if strains.shape[0] != stresses.shape[0]:
+        raise ValueError("Error: Incompatible dimensions for strains and stresses.")
+
+    # Compute the elastic constants using the least squares method
+    cij = np.linalg.lstsq(strains, stresses, rcond=None)[0]
+
+    c33 = cij[0][0]  # Longitudinal elastic constant
+    c22 = cij[1][1]  # Circumferential elastic constant
+    c23 = cij[2][2]  # Torsional elastic constant
+
+    # Obtain length and angle from pos_optimized
+    length, angle = pos_optimized.get_cell_lengths_and_angles()[:2]
+
+    # Store the elastic constants in the elastic_constants_dict
+    elastic_constants_dict['c33'] = c33 * length * angle / 100.  # Longitudinal elastic constant
+    elastic_constants_dict['c22'] = c22 * length * angle / 100.  # Circumferential elastic constant
+    elastic_constants_dict['c23'] = c23 * length * angle / 100.  # Torsional elastic constant
+
+    return elastic_constants_dict
+
+
+
+
+
+
+
+import numpy as np
+
+def NanotubeWatch(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
+    stresses = []
+    strains = []
+
+    # Loop over stress_set_dict to calculate strains and stresses for each key (strain type)
+    for key in stress_set_dict.keys():
+        s = strain_matrix(latt_system, key)[0]  # Getting the strain matrix
+        current_stress_list = np.array(stress_set_dict[key][0])
+
+        # Considering deformation in the system
+        # Fix for the shear strain component
+        current_strains = np.array([[s[2][2], s[0][0], s[0][2] if s[0][2]!=0 else s[2][0]],  # Longitudinal, circumferential, and shear strains (εz, εr, γ)
+                                    [s[0][0], s[1][1], s[1][2]],
+                                    [s[0][2], s[1][2], s[2][2]]])
+
+        current_stresses = np.array([[current_stress_list[0]],  # Longitudinal stress (σzz)
+                                     [current_stress_list[1]],  # Circumferential stress (σrr)
+                                     [current_stress_list[2]]])  # Shear stress (τrz)
+
+        strains.append(current_strains)
+        stresses.append(current_stresses)
+
+    # Stack the strains and stresses to form the matrices
+    strains = np.append(strains)
+    stresses = np.append(stresses)
+
+    # Compute the elastic constants using the least squares method
+    cij = lstsq(strains, stresses, rcond=None)[0] * conversion_factor
+
+    c33 = cij[0][0]  # Longitudinal elastic constant
+    c22 = cij[1][1]  # Circumferential elastic constant
+    c23 = cij[2][2]  # Shear (Torsional) elastic constant
+
+    # Obtain length and angle from pos_optimized
+    length, angle = pos_optimized.get_cell_lengths_and_angles()[:2]
+
+    # Store the elastic constants in the elastic_constants_dict
+    elastic_constants_dict['c33'] = c33 * length * angle / 100.  # Longitudinal elastic constant
+    elastic_constants_dict['c22'] = c22 * length * angle / 100.  # Circumferential elastic constant
+    elastic_constants_dict['c23'] = c23 * length * angle / 100.  # Torsional elastic constant
+
+    return elastic_constants_dict
+
+
+
+def Nanotube(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
+    stresses = []
+    strains = []
+    for key in stress_set_dict.keys():
+        strain_matrices = strain_matrix(latt_system, key)  # Getting the strain matrices
+        current_stress_list = array(stress_set_dict[key][0])
+
+        for s in strain_matrices:
+            current_strains = array([[s[0][0], s[0][1], s[0][2]],  # longitudinal
+                                     [s[1][0], s[1][1], s[1][2]],  # circumferential
+                                     [s[2][0], s[2][1], s[2][2]]]) # torsional
+            strains.append(current_strains)
+
+        for i in range(3):
+            current_stresses = array([[current_stress_list[0]],  # Longitudinal stress (σzz)
+                                      [current_stress_list[1]],  # Circumferential stress (σrr)
+                                      [current_stress_list[2]]]) # Shear stress (τrz)
+            stresses.append(current_stresses)
+
+    strains = vstack(strains)
+    stresses = vstack(stresses)
+
+    cij = linalg.lstsq(strains, stresses, rcond=None)[0] * conversion_factor
+    #print(cij)
+    #exit(1)
+
+    c33 = cij[0][0]  # Longitudinal elastic constant
+    c22 = cij[1][0]  # Circumferential elastic constant
+    c23 = cij[2][0]  # Shear (Torsional) elastic constant
+
+    length = pos_optimized.get_cell_lengths_and_angles()
+    cross_sectional_area = pi*length[0]*length[1]/4.
+
+    elastic_constants_dict['c33'] = c33 #* cross_sectional_area/length[2]  / 10.  # Longitudinal elastic constant
+    elastic_constants_dict['c22'] = c22 #* cross_sectional_area/length[2]  / 10.  # Circumferential elastic constant
+    elastic_constants_dict['c23'] = c23 #* cross_sectional_area/length[2]  / 10.  # Torsional elastic constant
+
+    return elastic_constants_dict
+
+
+
+def NanotubeDifferentdim(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
+    stresses = []
+    strains = []
+    for key in stress_set_dict.keys():
+        strain_matrices = strain_matrix(latt_system, key)  # Getting the strain matrices
+        current_stress_list = array(stress_set_dict[key][0])
+
+        for s in strain_matrices:
+            current_strains = array([[s[0][0], s[0][1], s[0][2]],  # longitudinal
+                                     [s[1][0], s[1][1], s[1][2]],  # circumferential
+                                     [s[2][0], s[2][1], s[2][2]]]) # torsional
+
+            strains.append(current_strains)
+
+        current_stresses = array([[current_stress_list[0]],  # Longitudinal stress (σzz)
+                                  [current_stress_list[1]],  # Circumferential stress (σrr)
+                                  [current_stress_list[2]]]) # Shear stress (τrz)
+
+        stresses.append(current_stresses)
+
+
+    strains = vstack(strains)
+    stresses = vstack(stresses)
+
+    cij = linalg.lstsq(strains, stresses, rcond=None)[0] * conversion_factor
+    
+    print(strains)
+    exit(1)
+
+    c33 = cij[2][0]  # Longitudinal elastic constant
+    c22 = cij[0][0]  # Circumferential elastic constant
+    c23 = cij[1][0]  # Shear (Torsional) elastic constant
+
+    length = pos_optimized.get_cell_lengths_and_angles()
+    cross_sectional_area = pi*length[0]*length[1]/4.
+
+    elastic_constants_dict['c33'] = c33 * cross_sectional_area/length[2]  / 10.  # Longitudinal elastic constant
+    elastic_constants_dict['c22'] = c22 * cross_sectional_area/length[2]  / 10.  # Circumferential elastic constant
+    elastic_constants_dict['c23'] = c23 * cross_sectional_area/length[2]  / 10.  # Torsional elastic constant
+
+    return elastic_constants_dict
+
+
+
+def Nanotube08042023(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
+    # Initialize lists to store the strain and stress components for all scenarios
+    strain_components = []
+    stress_components = []
+
+    # Loop over all strain scenarios
+    for key in stress_set_dict.keys():
+        # Compute the strain matrices for this scenario
+        strain_matrices = strain_matrix(latt_system, key)
+        
+        # Loop over each strain matrix and the corresponding stress component
+        for i, strain_matrix in enumerate(strain_matrices):
+            # Append the strain component (i.e., the average strain for this scenario and direction) to the list
+            strain_component = np.trace(strain_matrix) / 3
+            strain_components.append(strain_component)
+            
+            # Append the stress component (i.e., the average stress for this scenario and direction) to the list
+            stress_component = stress_set_dict[key][0][i]
+            stress_components.append(stress_component)
+
+    # Convert the lists to arrays and reshape them into column vectors
+    #strains = np.array(strain_components).reshape(-1, 1)
+    #stresses = np.array(stress_components).reshape(-1, 1)
+    strains = vstack(strain_components)
+    stresses = vstack(stress_components)
+
+    # Solve for the elastic constants
+    cij = np.linalg.lstsq(strains, stresses, rcond=None)[0] * conversion_factor
+
+    print(cij)
+    #exit(1)
+    c33 = cij[2][0]  # Longitudinal elastic constant
+    c22 = cij[0][0]  # Circumferential elastic constant
+    c23 = cij[1][0]  # Shear (Torsional) elastic constant
+    
+    length = pos_optimized.get_cell_lengths_and_angles()
+    cross_sectional_area = pi*length[0]*length[1]/4.
+
+    elastic_constants_dict['c33'] = c33 * cross_sectional_area/length[2]  / 10.  # Longitudinal elastic constant
+    elastic_constants_dict['c22'] = c22 * cross_sectional_area/length[2]  / 10.  # Circumferential elastic constant
+    elastic_constants_dict['c23'] = c23 * cross_sectional_area/length[2]  / 10.  # Torsional elastic constant
+
+    return elastic_constants_dict
+
+
+
+
+
+def NanotubeThisisOkay(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
+    stresses = []
+    strains = []
+    for key in stress_set_dict.keys():
+        s = strain_matrix(latt_system, key)[0]  # Getting the strain matrix
+        current_stress_list = array(stress_set_dict[key][0])
+
+        current_strains = array([[s[0][0], s[0][1], s[0][2]],  # longitudinal
+                                 [s[1][0], s[1][1], s[1][2]],  # circumferential
+                                 [s[2][0], s[2][1], s[2][2]]]) # torsional
+
+
+        current_stresses = array([[current_stress_list[0]],  # Longitudinal stress (σzz)
+                                  [current_stress_list[1]],  # Circumferential stress (σrr)
+                                  [current_stress_list[2]]]) # Shear stress (τrz)
+
+        strains.append(current_strains)
+        stresses.append(current_stresses)
+
+    strains = vstack(strains)
+    stresses = vstack(stresses)
+
+    cij = linalg.lstsq(strains, stresses, rcond=None)[0] * conversion_factor
+    print(cij)
+    #exit(1)
+    c33 = cij[2][0]  # Longitudinal elastic constant
+    c22 = cij[0][0]  # Circumferential elastic constant
+    c23 = cij[1][0]  # Shear (Torsional) elastic constant
+    
+    length = pos_optimized.get_cell_lengths_and_angles()
+    cross_sectional_area = pi*length[0]*length[1]/4.
+
+    elastic_constants_dict['c33'] = c33 * cross_sectional_area/length[2]  / 10.  # Longitudinal elastic constant
+    elastic_constants_dict['c22'] = c22 * cross_sectional_area/length[2]  / 10.  # Circumferential elastic constant
+    elastic_constants_dict['c23'] = c23 * cross_sectional_area/length[2]  / 10.  # Torsional elastic constant
+
+    return elastic_constants_dict
+
+
+
+
+def NanotubeModifying(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
+    stresses = []
+    strains = []
+
+    # Loop over stress_set_dict to calculate strains and stresses for each key (strain type)
+    for key in stress_set_dict.keys():
+        s = strain_matrix(latt_system, key)[0]  # Getting the strain matrix
+
+        current_stress_list = np.array(stress_set_dict[key][0])
+
+
+        # Considering deformation in the system
+ #       current_strains = np.array([[s[2][2], s[0][0], s[0][2]],  # Longitudinal, circumferential, and shear strains (εz, εr, γ)
+ #                                   [s[0][0], s[1][1], s[1][2]],
+ #                                   [s[0][2], s[1][2], s[2][2]]])
+
+#        current_strains = np.array([[s[0][0], s[0][1]/2, s[0][2]/2],
+#                                   [s[1][0]/2, s[1][1], s[1][2]/2],
+#                                   [s[2][0]/2, s[2][1]/2, s[2][2]]])
+
+
+
+#        current_strains = np.array([[s[2][2], s[0][0], s[0][2] if s[0][2]!=0 else s[2][0]],  # Longitudinal, circumferential, and shear strains (εz, εr, γ)
+#                                    [s[0][0], s[1][1], s[1][2]],
+#                                    [s[0][2], s[1][2], s[2][2]]])
+
+
+#current_strains = np.array([[s_2[0][0], 0., s_3[0][2]],  # εr, 0, γrz
+#                            [0., s_2[1][1], 0.],  # 0, εθ, 0
+#                            [s_3[2][0], 0., s_1[2][2]]]) # γzr, 0, εz
+
+#        current_strains = np.array([[s[0][0], 0., s[0][2]],  # εr, 0, γrz
+#                                   [0., s[1][1], 0.],  # 0, εθ, 0
+#                                   [s[2][0], 0., s[2][2]]])  # γzr, 0, εz
+
+
+
+
+        current_strains = array([[s[0][0], s[0][1], s[0][2]],  # longitudinal
+                                 [s[1][0], s[1][1], s[1][2]],  # circumferential
+                                 [s[2][0], s[2][1], s[2][2]]]) # torsional
+
+
+
+# Definition below:
+#epsilon =	[er 0 yrz]
+#		[0 e\theta 0]
+#		[yzr 0 ez]	
+
+	
+#After stacking it, it will look like as shown below
+#current_strains = np.array([
+#    [c_up, 0., -t_up],  # εr, 0, γrz
+#    [0., c_up, 0.],  # 0, εθ, 0
+#    [t_up, 0., up]  # γzr, 0, εz
+#])
+
+
+#current_strains = np.array([s[2][2], s[0][0], s[0][2] if s[0][2]!=0 else s[2][0]])
+
+
+
+
+#        current_stresses = np.array([[current_stress_list[2]],  # Longitudinal stress (σzz)
+#                                     [current_stress_list[1]],  # Circumferential stress (σrr)
+#                                     [current_stress_list[3]]])  # Shear stress (τrz)
+
+
+        current_stresses = array([[current_stress_list[0]],  # Longitudinal stress (σzz)
+                                     [current_stress_list[1]],  # Circumferential stress (σrr)
+                                     [current_stress_list[2]]]) # Shear stress (τrz)
+
+
+        strains.append(current_strains)
+        stresses.append(current_stresses)
+
+      
+    # Stack the strains and stresses to form the matrices
+    strains = vstack(strains)
+    stresses = vstack(stresses)
+   # print( array(strains))
+   # exit(1)
+    #print("stresses  ", stresses)
+    #print("This is currentnt ", strains)
+    #exit(1)
+    # Compute the elastic constants using the least squares method
+    cij = linalg.lstsq(strains, stresses, rcond=None)[0] * conversion_factor
+    #print("DDDDDDDDDDDDD ", cij)
+    #exit(1)
+
+# Check finite ones
+#c33 = cij[0][0]  # Stiffness related to longitudinal strain (?zz)
+#c44 = cij[0][2]  # Stiffness related to shear strain (?rz)
+#c11 = cij[1][1]  # Stiffness related to circumferential strain (???)
+#c66 = cij[2][2]  # Stiffness related to torsional strain (???)
+
+    c33 = cij[2][0]  # Longitudinal elastic constant
+    c22 = cij[0][0]  # Circumferential elastic constant
+    c23 = cij[1][0]  # Shear (Torsional) elastic constant
+    
+
+    # get cell lengths and angles
+    length = pos_optimized.get_cell_lengths_and_angles()
+    cross_sectional_area = pi*length[0]*length[1]/4.
+
+    # Store the elastic constants in the elastic_constants_dict
+    elastic_constants_dict['c33'] = c33 * cross_sectional_area/length[2]  / 100.  # Longitudinal elastic constant
+    elastic_constants_dict['c22'] = c22 * cross_sectional_area/length[2]  / 100.  # Circumferential elastic constant
+    elastic_constants_dict['c23'] = c23 * cross_sectional_area/length[2]  / 100.  # Torsional elastic constant
+
+    return elastic_constants_dict
+
+
+def Nanotubeworked(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
+    stresses = []
+    strains = []
+
+    # Loop over stress_set_dict to calculate strains and stresses for each key (strain type)
+    for key in stress_set_dict.keys():
+        s = strain_matrix(latt_system, key)[0]  # Getting the strain matrix
+        current_stress_list = np.array(stress_set_dict[key][0])
+
+        # Considering deformation in the system
+        current_strains = np.array([[s[1][1], s[2][2]],  # Strains from the strain matrix
+                                    [s[2][2], s[1][1]]])
+
+        current_stresses = np.array([[current_stress_list[1]],  # Stresses from the stress list
+                                     [current_stress_list[2]]])
+
+        strains.append(current_strains)
+        stresses.append(current_stresses)
+
+    # Stack the strains and stresses to form the matrices
+    strains = np.vstack(strains)
+    stresses = np.vstack(stresses)
+
+    # Compute the elastic constants using the least squares method
+    cij = lstsq(strains, stresses, rcond=None)[0] * conversion_factor
+
+    c22 = cij[0][0]  # Circumferential elastic constant
+    c33 = cij[1][1]  # Circumferential elastic constant
+    c23 = cij[1][0]  # Torsional elastic constant
+
+    # Compute c33 (Longitudinal elastic constant) using E = c22 - c23*c23/c22
+    #c33 = c22 - c23 * c23 / c22
+
+    # Obtain length and angle from pos_optimized
+    length, angle = pos_optimized.get_cell_lengths_and_angles()[:2]
+
+    # Store the elastic constants in the elastic_constants_dict
+    elastic_constants_dict['c22'] = c22 * length * angle / 100.  # Circumferential elastic constant
+    elastic_constants_dict['c23'] = c23 * length * angle / 100.  # Torsional elastic constant
+    elastic_constants_dict['c33'] = c33 * length * angle / 100.  # Longitudinal elastic constant
+
+    return elastic_constants_dict
+
+
+
+
+
+def NanotubeOld(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor):
+    stresses = []
+    strains = []
+
+    for key in stress_set_dict.keys():
+        s = strain_matrix(latt_system, key)  # Getting the strain matrix
+        strains.append(s)
+        current_stress_list = array(stress_set_dict[key][0])
+
+        # Considering deformation in the system
+#        current_strains = array([s[2][2], (s[0][0] + s[1][1])/2, s[0][2]])  # Longitudinal, circumferential, and torsional strains
+#        current_stresses = array([current_stress_list[2], current_stress_list[1], current_stress_list[4]])  # Relevant stress components
+
+
+        current_stresses = array([current_stress_list[2], current_stress_list[1], current_stress_list[4]])  # Relevant stress components
+        stresses.append(current_stresses)
+
+
+#        strains.append(current_strains)
+#        stresses.append(current_stresses)
+
+#    strains = vstack(strains)
+#    stresses = vstack(stresses)
+
+
+    strains = vstack(strains)
+    stresses = vstack(stresses)
+
+
+
+    cij = lstsq(strains, stresses, rcond=None)[0] * conversion_factor
+
+    c33 = cij[0] #[0]  # Longitudinal elastic constant
+    c22 = cij[1] #[1]  # Circumferential elastic constant
+    c23 = cij[2] #[2]  # Torsional elastic constant
+
+    length = pos_optimized.get_cell_lengths_and_angles()[2]
+
+    elastic_constants_dict['c33'] = c33 * length / 100.
+    elastic_constants_dict['c22'] = c22 * length / 100.
+    elastic_constants_dict['c23'] = c23 * length / 100.
+
+    return elastic_constants_dict
+
+
+
 def calc_elastic_constants(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict):
     # kB to GPa
-    convertion_factor = -0.1
+    conversion_factor = -0.1
     strains_matrix = indict['strains_matrix'][0]
     if strains_matrix != 'asess':
         if latt_system == 'Cubic':
-            elastic_constants_dict = Cubic(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor)
+            elastic_constants_dict = Cubic(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)
 
         elif latt_system == 'Hexagonal':
-            elastic_constants_dict = Hexagonal(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor)
+            elastic_constants_dict = Hexagonal(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)
                 
         elif latt_system == 'Trigonal1':
-            elastic_constants_dict = Trigonal1(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor)
+            elastic_constants_dict = Trigonal1(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)
 
         elif latt_system == 'Trigonal2':
-            elastic_constants_dict = Trigonal2(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor)
+            elastic_constants_dict = Trigonal2(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)
 
         elif latt_system == 'Tetragonal1':
-            elastic_constants_dict = Tetragonal1(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor)
+            elastic_constants_dict = Tetragonal1(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)
 
         elif latt_system == 'Tetragonal2':
-            elastic_constants_dict = Tetragonal2(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor)
+            elastic_constants_dict = Tetragonal2(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)
 
         elif latt_system == 'Orthorombic':
-            elastic_constants_dict = Orthorombic(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor)
+            elastic_constants_dict = Orthorombic(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)
 
         elif latt_system == 'Monoclinic':
-            elastic_constants_dict = Monoclinic(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor)
+            elastic_constants_dict = Monoclinic(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)
                 
         elif latt_system == 'Triclinic':
-            elastic_constants_dict = Triclinic(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor)
+            elastic_constants_dict = Triclinic(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)
         
         elif latt_system == 'isotropy':
-            elastic_constants_dict = isotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, convertion_factor)
+            elastic_constants_dict = isotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)
 
         elif latt_system == 'tetragonal':
-            elastic_constants_dict = tetragonal(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, convertion_factor)
+            elastic_constants_dict = tetragonal(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)
 
         elif latt_system == 'orthotropy':
-            elastic_constants_dict = orthotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, convertion_factor)
+            elastic_constants_dict = orthotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)
 
         elif latt_system == 'anisotropy':
-            elastic_constants_dict = anisotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, convertion_factor)                        
+            elastic_constants_dict = anisotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)                        
+
+        elif latt_system == 'any1D':
+            elastic_constants_dict = any1D(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)  
+        elif latt_system == 'true1D':
+            elastic_constants_dict = true1D(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)    
+        elif latt_system == 'Nanotube':
+            elastic_constants_dict = Nanotube(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)                      
         else:
             print('Crystal system is not parsed correctly!!!')
             exit(1)
 
     elif strains_matrix == 'asess':
         if indict['dimensional'][0] == '3D':
-            elastic_constants_dict = Triclinic(latt_system, elastic_constants_dict, stress_set_dict, convertion_factor)
+            elastic_constants_dict = Triclinic(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)
         elif indict['dimensional'][0] == '2D':
-            elastic_constants_dict = anisotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, convertion_factor)                        
+            elastic_constants_dict = anisotropy(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)                        
+        elif indict['dimensional'][0] == '1D':
+            elastic_constants_dict = any1D(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict, conversion_factor)                        
 
     return elastic_constants_dict

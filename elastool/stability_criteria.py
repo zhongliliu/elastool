@@ -1,7 +1,7 @@
 """
-  Elastool -- Elastic toolkit for finite-temperature elastic constants calculations
+  Elastool -- Elastic toolkit for zero and finite-temperature elastic constants and mechanical properties calculations
 
-  Copyright (C) 2019-2020 by Zhong-Li Liu
+  Copyright (C) 2019-2024 by Zhong-Li Liu and Chinedu Ekuma
 
   This program is free software; you can redistribute it and/or modify it under the
   terms of the GNU General Public License as published by the Free Software Foundation
@@ -11,7 +11,8 @@
   WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
   PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-  E-mail: zl.liu@163.com
+  E-mail: zl.liu@163.com, cekuma1@gmail.com
+
 """
 from numpy import array
 from numpy.linalg import det
@@ -147,6 +148,19 @@ def criteria(elastic_constants_dict, latt_system):
         condition3 = det(array([c11, c12, c16],
                                   [c12, c22, c26],
                                   [c16, c26, c33])) > 0
+
+
+#1D crystal
+    elif latt_system == 'any1D':
+        condition1 = c33 > 0
+
+    elif latt_system == 'true1D':
+        condition1 = c11 > 0
+
+    elif latt_system == 'Nanotube':
+        condition1 = c33 > 0
+        condition2 = c33 - c23 > 0
+        condition3 = c23 < c33
 
     else:
         print('Crystal system is not parsed correctly!!!')

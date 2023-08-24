@@ -1,0 +1,16 @@
+
+This is the ElasTool software & test suite
+
+ * COPYRIGHT: the license of under which ElasTool can be distributed
+ * README: This file
+ * doc: Users' Manual
+ * src: The source code; please see also the file 'INSTALL'
+ * examples: Example inputs 
+ * tools: Some small programs/scripts needed to analyze the results
+
+
+Bugs and suggestions can be sent to zl.liu@163.com or cekuma1@gmail.com.
+
+If you find something interesting that will be published, please cite ElasTool as,
+
+Zhong-Li Liu and Chinedu Ekuma, ElasTool: An automated Python-based toolkit for calculating elastic constants. 
