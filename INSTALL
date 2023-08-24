@@ -1,4 +1,11 @@
 Installation Guide:
+There are two ways you can install Elastool
+(A). Install with pip directly by typing on the command line without the quotes "pip install elastool"
+
+See details at: https://pypi.org/project/elastool/
+OR
+
+(B) Download the source files and follow the instructions below
 
 The following packages are required:
 1. Python 3.5 or later.
