@@ -14,8 +14,8 @@
   E-mail: zl.liu@163.com, cekuma1@gmail.com
 
 """
+from spglib import spglib
 from read_input import indict
-
 
 def findspg(atoms):
     spg0 = spglib.get_spacegroup(atoms, symprec=0.1)
@@ -30,24 +30,29 @@ def findspg(atoms):
 
 
 def find_crystal_system(pos_conv, dimensional,tubestrain_type):
+    
     if dimensional == '1D':
-        #        latt_system = 'any1D'
-
+        latt_system = 'any1D'  # Default value
         dist_acc = 0.1
         lenth_angl = pos_conv.get_cell_lengths_and_angles()
         a = lenth_angl[0]
         b = lenth_angl[1]
         c = lenth_angl[2]
-#        print('These are the lattice constants   ', a, b, c)
-        # The 1D lattice system is defined according to their spatial
-        # configuration
-        if tubestrain_type == "Longitudinal":
-            latt_system = 'any1D'  # This is 1D embedded in 3D space
-        elif tubestrain_type == "Generalized":
+
+
+        if tubestrain_type == "Generalized":
             latt_system = 'Nanotube'  # This is 1D embedded in 3D space
+
+        elif tubestrain_type == "AxialShear":
+            latt_system = 'AxialShear' 
+
+        elif tubestrain_type == "AxialLite":
+            latt_system = 'any1D'  
+        elif tubestrain_type == "Axial":
+            latt_system = 'Axial'  
         else:
             print('ERROR: Define appropriate nanotube structure!!!\n')
-            #latt_system = 'any1D'  # This is a "pure" 1D system
+ 
 
     elif dimensional == '2D':
         dist_acc = 0.1
@@ -59,8 +64,7 @@ def find_crystal_system(pos_conv, dimensional,tubestrain_type):
         c = lenth_angl[2]
         gamma = lenth_angl[5]
 
-        # The 2D lattice system is defined according to 2D Mater. 6 (2019)
-        # 048001
+        # The 2D lattice system is defined according to 2D Mater. 6 (2019) 048001
         if c > a and c > b:
             if abs(a - b) <= dist_acc:
                 if abs(
