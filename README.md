@@ -6,15 +6,15 @@ ElasTool is an innovative Python-based toolkit specifically designed for computi
 - **Universal Linear-Independent Coupling Strains (ULICS)** [[2]](#references)
 - **All-Single-Element Strain-Matrix Sets (ASESS)** [[1]](#references)
 
-This variety allows for automatic and efficient calculation of the SOECs.
+This variety of matrix sets allows for automatic and efficient calculation of the SOECs.
 
 ElasTool offers a flexible approach to determining the elastic constants and mechanical properties of various materials at zero and finite temperatures and pressures, providing a broad scope of utility across different material conditions.
 
-Currently, ElasTool integrates seamlessly with the VASP electronic structure code. However, its architecture is open to further expansions and can easily implement interfaces to other DFT packages. If you are interested in such extensions, don't hesitate to contact the authors for further guidance and support with the ElasTool source code.
+Currently, ElasTool integrates seamlessly with the VASP electronic structure code. However, its architecture is open to further expansion and can easily implement interfaces to other DFT packages. If you are interested in such extensions, don't hesitate to contact the authors for further guidance and support with the ElasTool source code.
 
 To run Elastool, please follow any of the examples given in the example folder.
 
-Presently, ElasTool interfaces with VASP electronic structure code. However, the interfaces to other DFT packages can also be easily implemented. If you're interested in extending ElasTool to other electronic structure codes, please email the authors if you need assistance with the description of ElasTool source code.
+Presently, ElasTool interfaces with VASP electronic structure code. However, the interfaces to other DFT packages can also be easily implemented. If you're interested in extending ElasTool to other electronic structure codes, please email the authors if you need assistance with the description of the ElasTool source code.
 
 ---
 ## Key Features
@@ -32,7 +32,7 @@ The ElasTool toolkit has many features, including:
 
 <a name="Contact Information"></a> 
 ## Contact Information
-**Emails:** [che218@lehigh.edu](che218@lehigh.edu) or [zl.liu@163.com](mailto:zl.liu@163.com)
+**Emails:** [che218@lehigh.edu](mailto:che218@lehigh.edu) or [zl.liu@163.com](mailto:zl.liu@163.com)
 Please don't hesitate to contact us if you have any questions about using ElasTool or suggestions for improving ElasTool.
 
 ---
