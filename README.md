@@ -14,36 +14,43 @@ Currently, ElasTool integrates seamlessly with the VASP electronic structure cod
 
 To run Elastool, please follow any of the examples given in the example folder.
 
-Presently, ElasTool interfaces to VASP electronic structure code. But the interfaces to other DFT packages can also be easily implemented. If you're interested in extending ElasTool to other electronic structure codes, please email the authors if you need assistance on the description of ElasTool source code.
+Presently, ElasTool interfaces with VASP electronic structure code. However, the interfaces to other DFT packages can also be easily implemented. If you're interested in extending ElasTool to other electronic structure codes, please email the authors if you need assistance with the description of ElasTool source code.
 
-## 1. About ElasTool
+---
+## Key Features
 
-- [1] ElasTool: An automated toolkit for elastic constants calculation - Z.-L. Liu, C.E. Ekuma, W.-Q. Li, J.-Q. Yang, and X.-J. Li, Computer Physics Communications 270, 108180, 2022.
-- [2] Calculations of single-crystal elastic constants made simple - R. Yu, J. Zhu, and H. Q. Ye. Comput. Phys. Commun., 181:671, 2010.
-- [3] Mechanical properties and hardness of boron pnicogens BX (X = N, P, As) - C.E. Ekuma and Z. L. Liu. Materialia 14, 100904 (2020).
-- [4] Z. L. Liu. High-efficiency calculation of elastic constants enhanced by the optimized strain-matrix sets (arxiv:2002.00005). 2020.
+The ElasTool toolkit has many features, including:
 
-## 2. Key Features
-
-The ElasTool toolkit has many features including:
-
-- Very easy to use (installation and run)
+- Very easy to use (installation and running)
 - High efficiency
-- Automated flow of the SOECs calculation
+- Automated flow of the SOECs calculations
 - The choice of three kinds of strain-matrix sets: the OHESS, ASESS, and ULICS
 - Zero-temperature SOECs
 - High-temperature and/or high-pressure SOECs.
 
 ---
 
+<a name="Contact Information"></a> 
+## Contact Information
+**Emails:** [che218@lehigh.edu](che218@lehigh.edu) or [zl.liu@163.com](mailto:zl.liu@163.com)
+Please don't hesitate to contact us if you have any questions about using ElasTool or suggestions for improving ElasTool.
+
+---
 <a name="references"></a> 
-### References
+## References
+### If you have used the ElasTool code in your research, please consider citing the following references:
 
-For quick reference, here are the associated papers:
+***For the main ElasTool*** implementation, please cite:
+- [1] ElasTool: An automated toolkit for elastic constants calculation - Z.-L. Liu, C.E. Ekuma, W.-Q. Li, J.-Q. Yang, and X.-J. Li, Computer Physics Communications 270, 108180, 2022.
+  
+### Other related citations are:
+- [2] Calculations of single-crystal elastic constants made simple - R. Yu, J. Zhu, and H. Q. Ye. Comput. Phys. Commun., 181:671, 2010.
+- [3] Mechanical properties and hardness of boron pnicogens BX (X = N, P, As) - C.E. Ekuma and Z. L. Liu. Materialia 14, 100904 (2020).
+- [4] Z. L. Liu. High-efficiency calculation of elastic constants enhanced by the optimized strain-matrix sets (arxiv:2002.00005). 2020.
 
-- [1] ElasTool: An automated toolkit for elastic constants calculation
-- [2] Calculations of single-crystal elastic constants made simple
-- [3] Mechanical properties and hardness of boron pnicogens
-- [4] High-efficiency calculation of elastic constants
+### 2D materials
+***If you have used Elastool*** for computing the elastic and mechanical properties of 2D materials, please consider citing the article(s):
+- [5] Efficient prediction of temperature-dependent elastic and mechanical properties of 2D materials - S.M. Kastuar, C.E. Ekuma, Z.-L. Liu, Nature Scientific Reports **12**, 3776 (2022).
+
 
 --- 
