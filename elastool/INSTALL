@@ -1,65 +1,67 @@
-Installation Guide:
+---------------------------
+ElasTool Installation Guide
+---------------------------
 
-The following packages are required:
-1. Python 3.5 or later.
-2. NumPy.
-3. Spglib.
-4. ASE.
-5. Pandas
+ElasTool is a robust Elastic Toolkit designed for calculating zero and finite-temperature elastic constants and mechanical properties.
 
-The above libraries can be installed with either pip or conda. If you do not have pip or conda installed already in your system, they can be installed easily using the following commands on a Linux environment.
+Copyright (C) 2019-2024 by Zhong-Li Liu and Chinedu Ekuma
 
-------
-Conda:
-------
-To install the full Anaconda distribution: issue the command: conda install anaconda. If you prefer, you can download your system specific type directly from the Anaconda website and follow the instructions therein at https://docs.anaconda.com/anaconda/install. If you prefer the minimal installation of Conda, please take a look at miniconda at the website: https://docs.conda.io/en/latest/miniconda.html
+**Disclaimer:**
+This program is free software, and you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.
 
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-Pip: To install pip, you need to use a combination of curl and python. For example:
+**Installation Methods:**
 
--------------------------------------
-In a centos system, do the following:
--------------------------------------
-(a) Download pip with: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-(b) Install pip with: sudo python get-pip.py
-(c) Verify the version with: pip -V
+1. **Using pip:**
+   To easily install the latest version of ElasTool, simply execute the command:
+   `pip install -U elastool`
 
-----------------------------------------------------------------------------
-For Ubuntu system, since we will use Python3 for Elastool, do the following:
-----------------------------------------------------------------------------
-(a) First, update your repository with: sudo apt update
-(b) Install pip with: sudo apt install python3-pip
-(c) Verify the version: pip3 --version
-(d) You can upgrade to the latest version with: sudo pip3 install --upgrade pip
+2. **Direct Installation from GitHub:**
+   - First, clone or download the ElasTool package from the GitHub repository (make sure to use the actual link).
+   - Then navigate to the downloaded directory and run:
+   `pip install .`
+   Note the "dot" symbol, which is crucial.
 
+3. **Installation on Restricted Systems:**
+   If you are working on a more restrictive system where options 1 and 2 are not suitable, the following packages are required:
+   - Python 3.5 or later.
+   - NumPy.
+   - Spglib.
+   - ASE.
+   - Pandas.
 
+   These libraries can be installed with either pip or conda. If you do not have pip or conda installed already in your system, follow the guidelines below:
 
---------------------------------------
-To install Python 3, do the following:
---------------------------------------
+   - **Installing Conda:**
+     To install the full Anaconda distribution, issue the command: `conda install anaconda`. Alternatively, you can download your system-specific type directly from the Anaconda website and follow the instructions therein at https://docs.anaconda.com/anaconda/install. For a minimal installation of Conda, consider miniconda at the website: https://docs.conda.io/en/latest/miniconda.html.
 
-Method 1:
-(a) conda update anaconda
-(b) conda install python=3.XX (XX is the version of the Python3, e.g., Python3.5)
+   - **Installing Pip on CentOS:**
+     1. Download pip with: `curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"`
+     2. Install pip with: `sudo python get-pip.py`
+     3. Verify the version with: `pip -V`
 
-Method 2: This method is ff you still use Python 2:
-(a) conda update anaconda
-(b) conda create --name py3 python=3.XXX
-(c) conda activate py3 to activate Python3
-(d) conda deactivate to deactivate an active environment
+   - **Installing Pip on Ubuntu:**
+     1. First, update your repository with: `sudo apt update`
+     2. Install pip with: `sudo apt install python3-pip`
+     3. Verify the version: `pip3 --version`
+     4. You can upgrade to the latest version with: `sudo pip3 install --upgrade pip`
 
--------------------------------------------------
-To install the other libraries, do the following:
--------------------------------------------------
+   - **Installing Python 3:**
+     - Method 1: `conda update anaconda` followed by `conda install python=3.XX` (XX is the version of the Python3, e.g., Python3.5)
+     - Method 2: If you still use Python 2: 
+       1. `conda update anaconda`
+       2. `conda create --name py3 python=3.XX`
+       3. `conda activate py3` to activate Python3
+       4. `conda deactivate` to deactivate an active environment
 
-NumPy:  conda install -c anaconda numpy
-Spglib: conda install -c conda-forge spglib
-ASE:    conda install -c conda-forge ase
-Pandas: conda install pandas. If you want to specify a particular version, use for example conda install pandas=0.20.3
+   - **Installing Other Libraries:**
+     - NumPy:  `conda install -c anaconda numpy`
+     - Spglib: `conda install -c conda-forge spglib`
+     - ASE:    `conda install -c conda-forge ase`
+     - Pandas: `conda install pandas` (To specify a version, use `conda install pandas=0.20.3`)
 
-
-
-After installing the above libraries, in the main directory, execute,
-python setup.py install [--prefix=/path/to/install/]
-
-The "--prefix" without the quotes could be needed if you're running on a shared HPC where you might not have admin privileges.
+**Final Installation Step:**
+After installing the prerequisites, in the main directory, execute:
+`python setup.py install [--prefix=/path/to/install/]`
+Note: The "--prefix" could be needed if you're running on a shared HPC where you might not have admin privileges.

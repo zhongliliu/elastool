@@ -11,36 +11,14 @@
   WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
   PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-  E-mail: zl.liu@163.com
+  E-mail: zl.liu@163.com and cekuma1@gmail.com
 """
-
 try:
-    from setuptools import setup
+    from setuptools import setup, find_packages
 except ImportError:
     from distutils.core import setup
 
-py_m=["calc_elastic_constants", "calc_stress", "deform_cell_asess_strains", \
-      "deform_cell_ohess_strains", "deform_cell_ulics", "extract_mean_values", \
-      "equilibrium_md", "find_spg", "make_conv_cell", "optimize_initial_str", \
-      "read_input", "relax_atoms_pos", "vasp_run", "sound_velocity", \
-      "stability_criteria", "strain_matrix", "write_incar"]
+#from setuptools import setup
 
-setup(
-      name="elastool",
-      version="1.0.2",
-      description="Elastic tool for zero and finite-temperature elastic constants and mechanical properties calculations",
-      author="Zhong-Li Liu and Chinedu Ekuma",
-      author_email="cekuma1@gmail.com",
-      url="https://sourceforge.net/projects/elastool/",
-      license="GNU GPL version 3",
-      py_modules=py_m,
-      package_dir = {'':'elastool'},
-      scripts=["elastool/elastool"],
-      install_requires=[
-          'numpy',
-          'spglib',
-          'ase',
-          'pandas',
-          'python3'
-      ]
-      )
+setup()
+

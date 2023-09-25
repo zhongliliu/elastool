@@ -1,10 +1,10 @@
 Metadata-Version: 1.0
 Name: elastool
-Version: 1.0.2
+Version: 1.0.3
 Summary: Elastic tool for finite-temperature elastic constants calculations
-Home-page: https://sourceforge.net/projects/elastool/
-Author: Zhong-Li Liu
-Author-email: zl.liu@163.com
+Home-page: https://github.com/zhongliliu/elastool
+Author: Zhong-Li Liu and Chinedu Ekuma
+Author-email: zl.liu@163.com or cekuma1@gmail.com
 License: GNU GPL version 3
 Description: UNKNOWN
 Platform: UNKNOWN

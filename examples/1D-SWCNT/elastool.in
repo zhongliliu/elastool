@@ -1,0 +1,40 @@
+###############################################################################
+### The input file to control the calculation details of elastic constants  ###
+###############################################################################
+
+# run mode: 1 for automatic run, 2 for pre-processing, 3 for post-processing
+# if 2, plz ensure the structure opt. is performed at fixed pressure or volume
+# i.e. CONTCAR and OUTCAR files both exist in ./OPT directory.
+run_mode = 1
+
+# Define the dimensional of the system: 2D/3D
+dimensional = 1D
+
+# the crystal structure file in vasp POSCAR (.vasp) or cif (.cif) format
+structure_file = SWCNT.vasp
+
+# if use conventional cell, no for primitive cell, yes for conventional cell
+if_conventional_cell = no
+
+# static or dynamic, static for 0 K, dynamic for finite-temperature
+method_stress_statistics = static
+
+# strains matrix for solve all elastic constants, asess or ohess or ulics
+strains_matrix = ohess
+
+# strains list for deforming lattice cell, 0 will be neglected because of 
+# the initial optimization, if method_statistics = dynamic, the first one is used
+strains_list = -0.06 -0.03 0.03 0.06
+
+# repeat numbers of three lattice vectors in conventional lattice for making
+# supercell of molecular dynamics simulations (method_statistics = dynamic)
+repeat_num = 3 3 3
+
+# last number of steps for sampling stresses used in the dynamic method
+num_last_samples = 1000
+
+#Potential directory - specify the location of your POTCAR files
+potential_dir = /user/potential/
+
+# The parallel submiting commmd
+parallel_submit_command = mpirun -np 28 vasp544 > log.vasp

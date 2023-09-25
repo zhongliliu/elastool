@@ -132,7 +132,7 @@ def deform_cell_ulics(latt_system, cell, up):
             exit(1)
 
     elif indict['dimensional'][0] == '1D':
-        if latt_system == 'any1D' or latt_system == 'true1D' or latt_system == 'Nanotube':
+        if latt_system == 'Nanotube':
             deform_matrix = identity_matrix + strain_matrix(latt_system, up)[0]
             deformed_cell = dot(cell, deform_matrix)
             deformed_cell_list.append(deformed_cell)

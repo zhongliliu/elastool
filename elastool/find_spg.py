@@ -32,7 +32,7 @@ def findspg(atoms):
 def find_crystal_system(pos_conv, dimensional,tubestrain_type):
     
     if dimensional == '1D':
-        latt_system = 'any1D'  # Default value
+        latt_system = 'Nanotube'  # Default value
         dist_acc = 0.1
         lenth_angl = pos_conv.get_cell_lengths_and_angles()
         a = lenth_angl[0]
@@ -40,16 +40,9 @@ def find_crystal_system(pos_conv, dimensional,tubestrain_type):
         c = lenth_angl[2]
 
 
-        if tubestrain_type == "Generalized":
+        if tubestrain_type == "Nanotube":
             latt_system = 'Nanotube'  # This is 1D embedded in 3D space
 
-        elif tubestrain_type == "AxialShear":
-            latt_system = 'AxialShear' 
-
-        elif tubestrain_type == "AxialLite":
-            latt_system = 'any1D'  
-        elif tubestrain_type == "Axial":
-            latt_system = 'Axial'  
         else:
             print('ERROR: Define appropriate nanotube structure!!!\n')
  

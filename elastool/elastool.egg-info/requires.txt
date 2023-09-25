@@ -1,5 +1,0 @@
-numpy
-spglib
-ase
-pandas
-python3

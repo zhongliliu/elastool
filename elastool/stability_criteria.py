@@ -145,22 +145,13 @@ def criteria(elastic_constants_dict, latt_system):
     elif latt_system == 'anisotropy':
         condition1 = c11 > 0
         condition2 = c11*c22 > c12*c12
-        condition3 = det(array([c11, c12, c16],
-                                  [c12, c22, c26],
-                                  [c16, c26, c33])) > 0
-
+        condition3 = det(array([[c11, c12, c16],
+                        [c12, c22, c26],
+                        [c16, c26, c66]])) > 0
 
 #1D crystal
-    elif latt_system == 'any1D':
-        condition1 = c33 > 0
-
-    elif latt_system == 'true1D':
-        condition1 = c11 > 0
-
     elif latt_system == 'Nanotube':
-        condition1 = c33 > 0
-        condition2 = c33 - c23 > 0
-        condition3 = c23 < c33
+        condition1 = elastic_constants_dict['c33'] > 0 
 
     else:
         print('Crystal system is not parsed correctly!!!')

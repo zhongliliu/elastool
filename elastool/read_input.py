@@ -16,6 +16,9 @@
 """
 
 from os import getcwd
+import os
+from write_default_input import write_default_input,write_default_elastool_in,print_default_input_message_0,print_default_input_message_1,display_help
+import sys
 
 
 def read_input():
@@ -37,8 +40,39 @@ def read_input():
                         
                 else:
                     indict[inputlist[0][0]] = inputlist[1]
-                    
+    run_mode_flag = (len(sys.argv) > 1 and sys.argv[1] == "-0") or ('run_mode' in indict and int(indict['run_mode'][0]) == 0)
+      
+
+  
+    if 'method_stress_statistics' in indict and run_mode_flag: #if 'method_stress_statistics' in indict and 'run_mode' in indict and int(indict['run_mode'][0]) == 0:
+        write_default_input(indict['method_stress_statistics'][0], cwd)
+        print_default_input_message_1()
+        sys.exit(0)
     return indict
+
+# Check for help flags before reading input
+#help_flags = {'-help', '--help', '-h', '--h'}
+#if set(sys.argv) & help_flags:
+#    print(read_help('help.txt'))
+#    sys.exit(0)
+
+
+# Check if any argument is a help command
+help_commands = (len(sys.argv) > 1 and (sys.argv[1] == "-help" or sys.argv[1] == "--help" or sys.argv[1] == "--h" or sys.argv[1] == "-h"))
+if help_commands:
+    display_help()
+    sys.exit(0)
+
+
+
+cwd = os.getcwd()
+elastool_in_exists = os.path.exists(os.path.join(cwd, "elastool.in"))
+run_mode_flag_elastoolin = (len(sys.argv) > 1 and sys.argv[1] == "-0")
+if run_mode_flag_elastoolin and not elastool_in_exists:
+  write_default_elastool_in(cwd)
+  print_default_input_message_0()
+  sys.exit(0)
 
 
 indict = read_input()
+

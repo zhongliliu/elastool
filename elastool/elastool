@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 from datetime import datetime
 from os import getcwd, mkdir, chdir
 from os.path import isdir, isfile
@@ -17,9 +18,88 @@ from ase.io import vasp
 from equilibrium_md import equil_md
 from stability_criteria import criteria
 from sound_velocity import sound_velocity
+import pkg_resources
 import warnings
 warnings.filterwarnings('ignore')
 
+version = pkg_resources.get_distribution("ElasTool").version
+#---------------------------------------------------------
+#Print out citation
+def print_boxed_message(ec_file=None):
+    header_footer = "+" + "-" * 78 + "+"
+    spacer = "| " + " " * 76 + " |"
+
+    # List of lines to be printed
+    lines = [
+        (" * CITATIONS *", True),
+        ("If you have used Elastool in your research, PLEASE cite:", False),
+        ("", False),  # Space after the above line
+        ("ElasTool: An automated toolkit for elastic constants calculation, ", False),
+        ("Z.-L. Liu, C.E. Ekuma, W.-Q. Li, J.-Q. Yang, and X.-J. Li, ", False),
+        ("Computer Physics Communications 270, 108180, (2022)", False),
+        ("", False),
+
+        ("", False),  # Blank line for separation
+        ("Efficient prediction of temperature-dependent elastic and", False),
+        ("mechanical properties of 2D materials, S.M. Kastuar, C.E. Ekuma, Z-L. Liu,", False),
+        ("Nature Scientific Report 12, 3776 (2022)", False)
+    ]
+
+    def output_line(line):
+        if ec_file:
+            ec_file.write(line + "\n")
+        else:
+            print(line)
+
+    output_line(header_footer)
+    
+    # Loop through each line, printing it within the box
+    for line, underline in lines:
+        centered_line = line.center(76)
+        output_line("| " + centered_line + " |")
+        
+        if underline:
+            underline_str = "-" * len(centered_line)
+            output_line("| " + underline_str.center(76) + " |")
+
+    # Print footer of the box
+    output_line(header_footer)
+
+
+
+def write_line(ec_file, content, padding=1, border_char="|", filler_char=" "):
+    content_width = max_width - (2 * padding) - 2  # Subtract 2 for the border characters
+    content = content[:content_width]  # Ensure content doesn't exceed the width
+    line = border_char + filler_char*padding + content.ljust(content_width) + filler_char*padding + border_char
+    ec_file.write(line + "\n")
+
+
+
+
+
+def print_banner(ec_file, version):
+    # Get current date and time
+    current_time = datetime.now().strftime('%H:%M:%S')
+    current_date = datetime.now().strftime('%Y-%m-%d')
+    conclusion_msg = f"Calculations ended at {current_time} on {current_date}"
+
+    # Concatenate the message with the version info
+    message = f"SUMMARY OF RESULTS\nusing\nElasTool Version: {version}\n{conclusion_msg}"
+
+    # Now use the write_line function
+    write_line(ec_file, '❤' * (max_width - 2), padding=0, border_char='❤', filler_char='❤')  # This will print a line of hearts
+    for line in message.split('\n'):
+        centered_line = line.center(max_width - 4)  # Subtract 4 for the two border characters and spaces at each end
+        write_line(ec_file, centered_line, padding=1, border_char='❤')
+    write_line(ec_file, '❤' * (max_width - 2), padding=0, border_char='❤', filler_char='❤')  # This will print another line of hearts
+
+#---------------------------------------------------------
+
+
+
+#--------------------------------------------------
+# Main code starts
+#--------------------------------------------------
 mean_press = 0
 stress_set_dict = {}
 method_stress_statistics = indict['method_stress_statistics'][0]
@@ -34,9 +114,7 @@ if method_stress_statistics == 'static':
 cwd = getcwd()
 structure_file = indict['structure_file'][0]
 
-print("")
-print("Reading controlling parameters from elastool.in...")
-print("")
+
 
 # optimize the initial structure at fixed pressure/volume
 if run_mode == 1 and not isfile('%s/OPT/CONTCAR'%cwd):
@@ -48,25 +126,18 @@ else:
 
 
 
-tubestrain_type = "Longitudinal" #indict['tubestrain_type'][0]
+tubestrain_type = "Nanotube" #indict['tubestrain_type'][0] #For potential extension to other forms of strain in 1D
 
-#print("latt_system", tubestrain_type)
-#exit(1)
 
 latt_system = find_crystal_system(pos_optimized, dimensional,tubestrain_type)
 
-
 if dimensional == '1D':
-    print("Experimental, not yet debugged")
-    if latt_system == 'any1D':
-         tubestrain_type = 'Longitudinal'  
-    elif latt_system == 'Nanotube':   
-         tubestrain_type = 'Generalized'
+    if latt_system == 'Nanotube':
+         tubestrain_type = 'Nanotube'
     else:
-        print('Choose a type of strain for the nanotube!!!')
+        print('Choose a type of strain for the 1D system!!!')
         exit(1)
-
-
+  
 #if dimensional == '3D':
 if method_stress_statistics == 'dynamic':
     equil_md(pos_optimized, cwd)
@@ -89,10 +160,6 @@ if method_stress_statistics == 'dynamic':
     repeat = [int(indict['repeat_num'][0]),int(indict['repeat_num'][1]),int(indict['repeat_num'][2])]
     pos_optimized = pos_optimized_v.repeat(repeat)
 
-#elif dimensional == '2D':
-#    if method_stress_statistics == 'dynamic':
-#        print('2D elastic constants cannot be calculated by the dynamic method!!!')
-#       exit(1)
 
 if run_mode == 1 or run_mode == 3:
     if method_stress_statistics == 'static':
@@ -111,15 +178,25 @@ else:
 
 time_start = datetime.now()
 
+print("")
+print("Reading controlling parameters from elastool.in...")
+print("")
+
+
+
 if not isdir('STRESS'):
     mkdir('STRESS')
 
+
 chdir('STRESS')
+
 
 if run_mode != 2:
     print("Calculating stresses using the %s strain matrices..." % strains_matrix.upper())
 else:
     print("Preparing necessary files using the %s strain matrices..." % strains_matrix.upper())
+
+
 
 for up in delta_list:
     print("strain = %.3f" % up)
@@ -149,151 +226,143 @@ for up in delta_list:
         chdir('..')
 chdir('..')
 
+# Estimate the max width based on the longest expected line:
+max_width = len("|This is a 3D hexagonal lattice with simple shear. |")
+
+
 if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
-    #print(stress_set_dict)
     print("")
     print("Fitting the first-order function to the collected \nstress-strain data according to Hooke's law...")
-    elastic_constants_dict = {}
-    elastic_constants_dict = calc_elastic_constants(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict)
-   # print("elastic_constants_dict are  ", elastic_constants_dict)
-   # exit(1)	
-    elastic_constants_dict = sound_velocity(elastic_constants_dict, cwd, dimensional,latt_system)
 
+    elastic_constants_dict = calc_elastic_constants(
+        pos_optimized, latt_system, {}, stress_set_dict)
 
-    longdash = '-'*48
-    longequal = '='*48
+    elastic_constants_dict = sound_velocity(
+        elastic_constants_dict, cwd, dimensional, latt_system)
+
+    longdash = '-' * 55
+
     with open('elastool.out', 'w') as ec_file:
-        ec_file.write("\n")
-        ec_file.write("+%s+\n" % longequal)
+        #write_line(ec_file, "")
+        print_banner(ec_file,version)
+        write_line(ec_file, "=" * max_width, border_char="+", filler_char="-")
+
         if dimensional == '1D':
-             ec_file.write("|This is a %2s %s |\n" % (indict['dimensional'][0], ('lattice with ' +tubestrain_type+ ' strain.').ljust(34)))
+            description = "This is a %2s %s" % (
+                indict['dimensional'][0],   tubestrain_type + ' lattice.')
         else:
-             ec_file.write("|This is a %2s %s |\n" % (indict['dimensional'][0], (latt_system+' lattice.').ljust(34)))
-        ec_file.write("|%s|\n" % longdash)
-        ec_file.write("|Mean Pressure = %s|\n" % (str("%.2f" %mean_press)+' GPa').ljust(32))
+            description = "This is a %2s %s" % (
+                indict['dimensional'][0], latt_system + ' lattice.')
+
+        write_line(ec_file, description)
+        write_line(ec_file, "Mean Pressure = %s GPa" %
+                   str("%.2f" % mean_press))
 
         if method_stress_statistics == 'dynamic':
-            ec_file.write("|Mean Temperature =  %s|\n" % (str(mean_temp)+' K').ljust(32))
+            write_line(ec_file, "Mean Temperature =  %s K" % str(mean_temp))
+
         print_anisotropy = False
         try:
             G_V = elastic_constants_dict['G_v']
             G_R = elastic_constants_dict['G_r']
             B_V = elastic_constants_dict['B_v']
             B_R = elastic_constants_dict['B_r']
-            A_U = 5*G_V / G_R + B_V / B_R - 6
+            A_U = 5 * G_V / G_R + B_V / B_R - 6
             A_C = (G_V - G_R) / (G_V + G_R)
             print_anisotropy = True
         except:
             pass
+
         has_print_ec = False
         has_print_moduli = False
         has_print_sound = False
+
         for key in elastic_constants_dict.keys():
             if dimensional == '3D':
-                if key[0] == 'c':
-                    if not has_print_ec:
-                        ec_file.write("|%s|\n" % longdash)
-                        ec_file.write("%s|\n" %("|Elastic constants:").ljust(49))
-                        has_print_ec = True
-                    ec_file.write("|%s = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" GPa").ljust(42)))
-                elif key[0] == 'B' or key[0] == 'G':
-                    if not has_print_moduli:
-                        ec_file.write("|%s|\n" % longdash)
-                        ec_file.write("%s|\n" %("|Elastic moduli:").ljust(49))
-                        has_print_moduli = True
-                    if len(key) == 3:
-                        ec_file.write("|%s = %s|\n" % (key.upper(), (str("%.2f" % elastic_constants_dict[key])+" GPa").ljust(42)))
-                    else:
-                        ec_file.write("|%s = %s|\n" % (key.upper(), (str("%.2f" % elastic_constants_dict[key])+" GPa").ljust(40)))
-                elif key[0] == 'E':
-                    ec_file.write("|Young's modulus (%s) = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" GPa").ljust(26)))
-                elif key[0] == 'v':
-                    ec_file.write("|Possion's ratio (%s) = %s|\n" % (key.capitalize(), (str("%.4f" % elastic_constants_dict[key])).ljust(26)))
-                elif key[0] == 'V':
-                    if not has_print_sound:
-                        ec_file.write("|%s|\n" % longdash)
-                        ec_file.write("%s|\n" %("|Sound velocity:").ljust(49))
-                        has_print_sound = True
-                    ec_file.write("|%s = %s|\n" % (key.upper(), (str("%.2f" % elastic_constants_dict[key])+" Km/s").ljust(42)))
-                elif key[0] == 'T':
-                    ec_file.write("|%s|\n" % longdash)
-                    ec_file.write("%s|\n" %("|Debye temperature:").ljust(49))
-                    ec_file.write("|%s = %s|\n" % (key.upper(), (str("%.2f" % elastic_constants_dict[key])+" K").ljust(42)))
+                if key[0] == 'c' and not has_print_ec:
+                    write_line(ec_file, longdash)
+                    write_line(ec_file, "Elastic constants:")
+                    has_print_ec = True
+
+                content_mapping = {
+                    'c': "%s = %s GPa",
+                    'B': "%s = %s GPa",
+                    'G': "%s = %s GPa",
+                    'E': "Young's modulus (%s) = %s GPa",
+                    'v': "Poisson's ratio (%s) = %s",
+                    'V': "Sound velocity (%s) = %s Km/s",
+                    'T': "Debye temperature (%s) = %s K"
+                }
+
+                content = content_mapping.get(key[0], None)
+                if content:
+                    write_line(ec_file, content %
+                               (key.capitalize(), "%.2f" % elastic_constants_dict[key]))
 
             elif dimensional == '2D':
-                if key[0] == 'c':
-                    if not has_print_ec:
-                        ec_file.write("|%s|\n" % longdash)
-                        ec_file.write("%s|\n" %("|Elastic constants:").ljust(49))
-                        has_print_ec = True
-                    ec_file.write("|%s = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" N/m").ljust(42)))
-                elif key[0] == 'Y':
-                    ec_file.write("|Young's modulus (%s) = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" N/m").ljust(23)))
-                elif key[0] == 'v':
-                    ec_file.write("|Possion's ratio (%s) = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])).ljust(26)))
-                elif key[0] == 'B':
-                    ec_file.write("|Bulk modulus (%s) = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" N/m").ljust(29)))
-                elif key[0] == 'G':
-                    ec_file.write("|Shear modulus (%s) = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" N/m").ljust(28)))
-                elif key[0] == 'V':
-                    if not has_print_sound:
-                        ec_file.write("|%s|\n" % longdash)
-                        ec_file.write("%s|\n" %("|Sound velocity:").ljust(49))
-                        has_print_sound = True
-                    ec_file.write("|%s = %s|\n" % (key.upper(), (str("%.2f" % elastic_constants_dict[key])+" Km/s").ljust(42)))
-                elif key[0] == 'T':
-                    ec_file.write("|%s|\n" % longdash)
-                    ec_file.write("%s|\n" %("|Debye temperature:").ljust(49))
-                    ec_file.write("|%s = %s|\n" % (key.upper(), (str("%.2f" % elastic_constants_dict[key])+" K").ljust(42)))
+                content_mapping = {
+                    'c': "%s = %s N/m",
+                    'Y': "Young's modulus (%s) = %s N/m",
+                    'v': "Poisson's ratio (%s) = %s",
+                    'B': "In-plane stiffness (%s) = %s N/m",
+                    'G': "Shear modulus (%s) = %s N/m",
+                    'V': "Sound velocity (%s) = %s Km/s",
+                    'T': "Debye temperature (%s) = %s K"
+                }
 
+                content = content_mapping.get(key[0], None)
+                if content:
+                    write_line(ec_file, content %
+                               (key.capitalize(), "%.2f" % elastic_constants_dict[key]))
 
             elif dimensional == '1D':
-                if key[0] == 'c':
-                    if not has_print_ec:
-                        ec_file.write("|%s|\n" % longdash)
-                        ec_file.write("%s|\n" %("|Elastic constants:").ljust(49))
-                        has_print_ec = True
-                    ec_file.write("|%s = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" GPa").ljust(42)))
-                elif key[0] == 'Y':
-                    ec_file.write("|Young's modulus (%s) = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" GPa").ljust(26)))
-                elif key[0] == 'v':
-                    ec_file.write("|Possion's ratio (%s) = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])).ljust(26)))
-                elif key[0] == 'B':
-                    ec_file.write("|Bulk modulus (%s) = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" GPa").ljust(29)))
-                elif key[0] == 'G':
-                    ec_file.write("|Shear modulus (%s) = %s|\n" % (key.capitalize(), (str("%.2f" % elastic_constants_dict[key])+" GPa").ljust(28)))
-                elif key[0] == 'C':
-                    ec_file.write("|Compliance (%s) = %s|\n" % (key.capitalize(), (str("%.2e" % elastic_constants_dict[key])+" GPa^-1").ljust(31)))
-                elif key[0] == 'R':
-                    ec_file.write("|Resonance Frequency (%s) = %s|\n" % (key.capitalize(), (str("%.2e" % elastic_constants_dict[key])+" Hz").ljust(22)))
+                content_mapping = {
+                    'c': "%s = %s GPa",
+                    'Y': "Young's modulus (%s) = %s GPa",
+                    'v': "Poisson's ratio (%s) = %s",
+                    'B': "Bulk modulus (%s) = %s GPa",
+                    'G': "Shear modulus (%s) = %s GPa",
+                    'C': "Compliance (%s) = %s GPa^-1",
+                    'R': "Resonance frequency (%s) = %s GHz",
+                    'V': "Sound velocity (%s) = %s Km/s",
+                    'T': "Debye temperature (%s) = %s K"
+                }
 
-                elif key[0] == 'V':
-                    if not has_print_sound:
-                        ec_file.write("|%s|\n" % longdash)
-                        ec_file.write("%s|\n" %("|Sound velocity:").ljust(49))
-                        has_print_sound = True
-                    ec_file.write("|%s = %s|\n" % (key.upper(), (str("%.2f" % elastic_constants_dict[key])+" Km/s").ljust(42)))
-                elif key[0] == 'T':
-                    ec_file.write("|%s|\n" % longdash)
-                    ec_file.write("%s|\n" %("|Debye temperature:").ljust(49))
-                    ec_file.write("|%s = %s|\n" % (key.upper(), (str("%.2f" % elastic_constants_dict[key])+" K").ljust(42)))
+                content = content_mapping.get(key[0], None)
+                if content:
+              #      if key in ['C', 'R']:
+              #          write_line(ec_file, content %
+              #                     (key.capitalize(), "%.2e" % elastic_constants_dict[key]))
+              #      else:
+              #          write_line(ec_file, content %
+              #                     (key.capitalize(), "%.2f" % elastic_constants_dict[key]))
+
+                    write_line(ec_file, content %
+                               (key.capitalize(), "%.2f" % elastic_constants_dict[key]))
+
 
         if print_anisotropy:
-            ec_file.write("|%s|\n" % longdash)
-            ec_file.write("%s|\n" %("|Elastic anisotropy:").ljust(49))
-            ec_file.write("|A_U = %s|\n" % (str("%.4f" % A_U)).ljust(42))
-            ec_file.write("|A_C = %s|\n" % (str("%.4f" % A_C)).ljust(42))
-        
-        stable = criteria(elastic_constants_dict, latt_system)
-        ec_file.write("|%s|\n" % longdash)
-        ec_file.write("%s|\n" %("|Structure stability analysis...").ljust(49))
-        if stable:
-            ec_file.write("|This structure is mechanically STABLE.          |\n")
-        else:
-            ec_file.write("|This structure is NOT mechanically stable.   |\n")
+            write_line(ec_file, longdash)
+            write_line(ec_file, "Elastic anisotropy:")
+            write_line(ec_file, "A_U = %s" % "%.4f" % A_U)
+            write_line(ec_file, "A_C = %s" % "%.4f" % A_C)
 
-        ec_file.write("+%s+\n" % longequal)
+        stable = criteria(elastic_constants_dict, latt_system)
+        write_line(ec_file, longdash)
+        write_line(ec_file, "Structure stability analysis...")
+
+        if stable:
+            write_line(ec_file, "This structure is mechanically STABLE.")
+        else:
+            write_line(ec_file, "This structure is NOT mechanically stable.")
+
+        write_line(ec_file, "")
+        write_line(ec_file, "=" * max_width, border_char="+", filler_char="-")
+
+        print_boxed_message(ec_file)
         ec_file.write("\n")
+
+
 
     #print(elastic_constants_dict)
 
@@ -304,18 +373,21 @@ with open('time_used.log', 'w') as time_record_file:
     time_record_file.write("The stress calculations used %d seconds.\n" % time_used)
 
 
+output = sys.stdout
+
 
 if run_mode != 2:
-    print("")
-    print("The final results are as follows:")
+    #print("")
+    #print_banner(output,version)
+
     for line in open('elastool.out', 'r'):
         l = line.strip('\n')
         print(l)
-
     print("")
     print("Results are also saved in the elastool.out file.")
     print("")
     print("")
+    #print_boxed_message()
     print("Well done! GOOD LUCK!")
     print("")
 else:
@@ -323,5 +395,9 @@ else:
     print("All necessary files are prepared in the STRESS directory.")
     print("Run VASP in each subdirectory and rerun elastool with run_mode = 3.")
     print("")
-    print("GOOD LUCK!")
+    print_boxed_message();
+    print("Well done! GOOD LUCK!")
     print("")
+
+
+

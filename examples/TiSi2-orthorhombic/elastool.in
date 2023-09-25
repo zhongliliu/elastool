@@ -33,5 +33,8 @@ repeat_num = 3 3 3
 # last number of steps for sampling stresses used in the dynamic method
 num_last_samples = 500
 
+#Potential directory - specify the location of your POTCAR files
+potential_dir = /user/potential/
+
 # The parallel submiting commmd
 parallel_submit_command = mpirun -np 28 vasp544 > log.vasp

@@ -14,6 +14,8 @@
   E-mail: zl.liu@163.com, cekuma1@gmail.com
 
 """
+import os
+from ase.io import vasp, cif
 from os import system
 from os.path import isfile
 import subprocess
@@ -24,24 +26,49 @@ from read_input import indict
 from extract_mean_values import get_pressure, mean_pressure
 
 
+
+
 def vasp_run(step, kpoints_file_name, cwd):
     write_incar(step, cwd)
-    system("cp %s/%s KPOINTS" % (cwd, kpoints_file_name))
+    os.system("cp %s/%s KPOINTS" % (cwd, kpoints_file_name))
 
-    pos = vasp.read_vasp('POSCAR')
+    #structure_file = indict['structure_file'][0]
+    structure_file = os.path.join(cwd, indict['structure_file'][0])
+    
+    if structure_file.endswith('.vasp'):
+        pos = vasp.read_vasp(structure_file)
+    elif structure_file.endswith('.cif'):
+        pos = cif.read_cif(structure_file)
+    else:
+        raise ValueError("Unsupported structure file format!")
+
     chem_symb = pos.get_chemical_symbols()
 
+    # Determine unique elements
     ele_list = []
     for i in chem_symb:
         if i not in ele_list:
             ele_list.append(i)
-    if isfile('POTCAR'):
-        system("rm POTCAR")
+
+    if os.path.isfile('POTCAR'):
+        os.system("rm POTCAR")
+
+    potential_directory = indict['potential_dir'][0]
 
     for ele in ele_list:
-        system("cat %s/POTCAR-%s >> POTCAR" % (cwd, ele))
+        # Path possibilities
+        potential_potcar_paths = [
+            os.path.join(potential_directory, ele, "POTCAR"),
+            os.path.join(potential_directory, ele + "_pv", "POTCAR"),
+            os.path.join(potential_directory, ele + "_sv", "POTCAR")
+        ]
 
-    # method_stress_statistics = indict['method_stress_statistics'][0]
+        pot_file_path = next((path for path in potential_potcar_paths if os.path.exists(path)), None)
+
+        if pot_file_path:
+            os.system(f"cat {pot_file_path} >> POTCAR")
+        else:
+            raise Exception(f"POTCAR for {ele} not found in any of the expected directories!")
 
     for line in open('INCAR','r'):
         if 'PSTRESS' in line:

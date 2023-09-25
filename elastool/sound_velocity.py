@@ -82,8 +82,6 @@ def sound_velocity(elastic_constants_dict, cwd, dimensional, latt_system):
         # Note you can use (C_ii-C_ij)/2        cell = pos.get_cell()
         G_b = Y_2Db / 2.0 / (1 + v_b)
 
-#        print(B_a,G_a,B_b,G_b)
-
         # PRB 94, 245420 (2016)
         # Calculate sound velocities in km/s
 
@@ -91,8 +89,7 @@ def sound_velocity(elastic_constants_dict, cwd, dimensional, latt_system):
         # The 2D density in Kg/m^2
         area = linalg.norm(cross(cell[0], cell[1]))
         rho_2D = M * 1E-3 / Na / area / 1E-20
-#        print(rho_2D)
-#        print(Y_2D)
+
 
         # 1E-3*sqrt(Y_2D*(1-v)/rho_2D/(1+v)/(1-2*v))
         V_la = 1E-3 * sqrt(abs(B_a + G_a) / rho_2D)
@@ -127,87 +124,37 @@ def sound_velocity(elastic_constants_dict, cwd, dimensional, latt_system):
 
     elif dimensional == '1D':
         cell = pos.get_cell()
-        # The 1D density in Kg/m
-        # Assuming the 1D structure is oriented along cell[2]
-        length = linalg.norm(cell[2])#/1E-10
+        # We have1D structure is oriented along cell[2]
+        length = linalg.norm(cell[2])
         rho_1D = M * 1E-3 / Na / length  / 1E-10
         mass_density = M * 1E-3 / Na / volume / 1E-30 # kg/m^3
-
+        
        # M = pos.get_masses().mean()  # Mean atomic mass in the unit cell
        # n = len(pos)  # Number of atoms in the unit cell
        # Na = 6.02214076E+23  # Avogadro's number
  
-        if latt_system == 'any1D':
+        if latt_system == 'Nanotube': 
+
             c33 = elastic_constants_dict['c33']
             c23 = elastic_constants_dict['c23']
-            Y = c33 - c23 * c23 / c33
-            v = c23 / c33
+            Y = c33-c23
+            v = -c23 / c33
+            K = (c33-2*c23)/3.
+            G = (c33-c23)/2.
             V = 1E-3* sqrt(abs(c33*1E+9) / mass_density)
-            #T_D =(h / k) * (n * Na * rho_1D/2 / M / 1E-3) * V * 1E+3
-            T_D = (h / k) * (3. * n / 4. / pi * Na * mass_density / M / 1E-3)**(1. / 3.) * V * 1E+3 # We have to use the 3D Debye temperatue formula! For true 1D, T_D = hbar/K_B(\pi*N/L)*V
-            R_f = 0.56 * sqrt(abs(c33) * 1E+9 / mass_density) / (2 * pi * length* 1E-10 ) # Resonance frequency. The 0.56 factor is a correction factor that arises for a cantilever with a fixed end and a free end.
+            T_D = (h / k) * (3. * n / 4. / pi * Na * mass_density / M / 1E-3)**(1. / 3.) * V * 1E+3 
+            R_f = sqrt(abs(c33) * 1E+9 / mass_density) / (2 * pi * length* 1E-10 )/1E+9
 
             elastic_constants_dict['Y'] = Y
-            elastic_constants_dict['v'] = v
+            elastic_constants_dict['B'] = K # Bulk modulus
+            elastic_constants_dict['G'] = G #Shear modulus
+            #elastic_constants_dict['v'] = v
             elastic_constants_dict['V'] = V
             elastic_constants_dict['T_D'] = T_D
-            elastic_constants_dict['R_f'] = R_f
-        elif latt_system == 'true1D':
+            #elastic_constants_dict['R_f'] = R_f
 
-            # Here you should add calculations for 'true1D'
-            # I'm setting 'Y' and 'v' as None since you did not specify how to
-            # calculate them
-            c11 = elastic_constants_dict['c11']
-            #print('This is c11  ', rho_1D)
-            V_s = 1E-3 * sqrt(abs(c11) / rho_1D)
-            T_D = hbar / k * (2. * pi * n / length / 1E-10) * V_s * 1E+3
-            R_f = 1. / (2. * pi) * sqrt(abs(c11) / M /
-                                        1E-3)  # Resonance frequency
-            c = 1. / c11
-            elastic_constants_dict['Y'] = c11
-           # elastic_constants_dict['v'] = v
-            elastic_constants_dict['V_s'] = V_s
-            elastic_constants_dict['T_D'] = T_D
-            elastic_constants_dict['C'] = c
-            elastic_constants_dict['R'] = R_f
 
-        elif latt_system == 'Nanotube':
-            c33 = elastic_constants_dict['c33']
-            c22 = elastic_constants_dict['c22']
-            c23 = elastic_constants_dict['c23']
-            #print('This is c22  ', c22,c33,c23)
-            #print('This is rho_1D  ', mass_density)
-            V_l = 1E-3* sqrt(abs(c33*1E+9) / mass_density)
-            V_t = 1E-3 * sqrt(abs(c23*1E+9) / mass_density)
-            V_a = sqrt(abs(V_l * V_t))
-            #T_D = hbar *(3.*pi**2 * mass_density)/(volume*k)**(1/3.) * (V_l*V_t)**(2/3.) *1E+3
-            T_D = (h / k) * (3. * n / 4. / pi * Na * mass_density / M / 1E-3)**(1. / 3.) * V_a * 1E+3 #hbar / k * ( n * Na * mass_density / M / 1E-3)**(1. / 3.) * V_a * 1E+3
 
-            T_D_l = (h / k) * (3. * n / 4. / pi * Na * mass_density / M / 1E-3)**(1. / 3.)  * V_l* 1E+3
-
-            T_D_t = (h / k) * (3. * n / 4. / pi * Na * mass_density / M / 1E-3)**(1. / 3.) * V_t* 1E+3
-
-            R_f_t = 0.56 * sqrt(abs(c22) * 1E+9 / mass_density) / (2 * pi * length* 1E-10 )
-            R_f_l = 0.56 * sqrt(abs(c33) * 1E+9 / mass_density) / (2 * pi * length* 1E-10 ) # Resonance frequency. The 0.56 factor is a correction factor that arises for a cantilever with a fixed end and a free end.
-            c_t = 1. / c22
-            c_l = 1. / c33
-            v = (c33 - 2*c22) / (2 * (c33 - c22)) #c23 / c33 #c23 can be negative
-            elastic_constants_dict['Y_Ldnal'] = c33 #- c23 * c23 / c33
-            elastic_constants_dict['Y_Circum'] = c22
-            elastic_constants_dict['B'] = (c33 + 2 * c22) / 3. # Bulk modulus
-            elastic_constants_dict['G_L'] = (c33)/2. #Longitudinal Shear modulus
-            elastic_constants_dict['G_C'] = (c22)/2. #Circumferential Shear modulus
-            elastic_constants_dict['G_cs'] = c23 #Coupled Shear modulus
-            elastic_constants_dict['v'] = v
-            elastic_constants_dict['V_t'] = V_t
-            elastic_constants_dict['V_l'] = V_l
-            elastic_constants_dict['T_D'] = T_D
-            elastic_constants_dict['T_D_l'] = T_D_l
-            elastic_constants_dict['T_D_t'] = T_D_t
-            #elastic_constants_dict['C_t'] = c_t
-            #elastic_constants_dict['C_l'] = c_l
-            elastic_constants_dict['R_l'] = R_f_l
-            elastic_constants_dict['R_t'] = R_f_t
     return elastic_constants_dict
 
 
