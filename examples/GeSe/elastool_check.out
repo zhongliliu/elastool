@@ -1,0 +1,38 @@
+
++================================================+
+|This is a 2D orthotropy lattice.                |
+|------------------------------------------------|
+|Mean Pressure = -0.01 GPa                       |
+|------------------------------------------------|
+|Elastic constants:                              |
+|C11 = 59.12 N/m                                 |
+|C12 = 33.71 N/m                                 |
+|C22 = 36.70 N/m                                 |
+|C66 = 26.17 N/m                                 |
+|------------------------------------------------|
+|Sound velocity:                                 |
+|V_LA = 2.94 Km/s                                 |
+|V_LB = 7.76 Km/s                                 |
+|V_SA = 1.36 Km/s                                 |
+|V_SB = 1.57 Km/s                                 |
+|V_MA = 1.30 Km/s                                 |
+|V_MB = 1.55 Km/s                                 |
+|------------------------------------------------|
+|Debye temperature:                              |
+|T_DA = 171.00 K                                  |
+|------------------------------------------------|
+|Debye temperature:                              |
+|T_DB = 204.56 K                                  |
+|Young's modulus (Y_2da) = 17.47 N/m              |
+|Young's modulus (Y_2db) = 28.15 N/m              |
+|Shear modulus (G_a) = 5.56 N/m                    |
+|Shear modulus (G_b) = 7.34 N/m                    |
+|Possion's ratio (v) = 0.57                      |
+|Possion's ratio (v) = 0.92                      |
+|Bulk modulus (B_a) = 20.33 N/m                    |
+|Bulk modulus (B_b) = 172.94 N/m                   |
+|------------------------------------------------|
+|Structure stability analysis...                 |
+|This structure is mechanically STABLE.          |
++================================================+
+

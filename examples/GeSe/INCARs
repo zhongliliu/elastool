@@ -1,0 +1,50 @@
+########-------- Step: fixed-pressure-opt --------########
+PREC    = Accurate
+ENCUT   = 550
+EDIFF   = 1e-6
+EDIFFG  = -0.02
+
+IBRION  = 2
+ISIF    = 4
+ISYM    = 2
+NSW     = 200
+ISMEAR  = 0
+SIGMA   = 0.1
+POTIM   = 0.1
+PSTRESS = 0.001
+
+NPAR    = 4
+NSIM    = 4
+ALGO    = Normal
+IALGO   = 48
+ISTART  = 0
+
+LPLANE  = .TRUE.
+LCHARG  = .FALSE.
+LWAVE   = .FALSE.
+LVDW = .TRUE. ## ADD VDW INTERACTION 
+IVDW =12
+
+########-------- Step: fixed-volume-opt --------########
+PREC    = Accurate
+ENCUT   = 550
+EDIFF   = 1e-6
+
+IBRION  = 2
+ISIF    = 2
+ISYM    = 2
+NSW     = 200
+ISMEAR  = 0
+SIGMA   = 0.1
+POTIM   = 0.1
+
+NPAR    = 4
+NSIM    = 4
+ALGO    = Normal
+IALGO   = 48
+ISTART  = 0
+LPLANE  = .TRUE.
+LCHARG  = .FALSE.
+LWAVE   = .FALSE.
+LVDW = .TRUE. ## ADD VDW INTERACTION 
+IVDW =12

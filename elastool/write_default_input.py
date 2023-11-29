@@ -257,6 +257,7 @@ def write_default_elastool_in(cwd):
 # run mode: 0 for generating key default input files, 1 for automatic run, 2 for pre-processing, 3 for post-processing
 # if 2, plz ensure the structure opt. is performed at fixed pressure or volume
 # i.e. CONTCAR and OUTCAR files both exist in ./OPT directory.
+#Additionally, you can visualize elastic parameters directly using Elate by running "elastool -elate" after strain-stress calculations
 run_mode = 0
 
 # Define the dimensional of the system: 1D/2D/3D. 
@@ -280,13 +281,20 @@ strains_list = -0.06 -0.03 0.03 0.06
 
 # repeat numbers of three lattice vectors in conventional lattice for making
 # supercell of molecular dynamics simulations (method_statistics = dynamic)
-repeat_num = kx ky kz
+repeat_num = 1 1 1
 
 # last number of steps for sampling stresses used in the dynamic method
 num_last_samples = 500
 
 #Potential directory - specify the location of your POTCAR files
 potential_dir = /user/potential/
+
+# Plot parameters EVGB for 2D. Second argument turns on interactive plotly. Do not turn on for high-throughput calculations 
+plotparameters = no,no
+
+# Choose Elate parameters to plot. Alternatively, after obtaining your elastic tensor, run "elastool -elate to view on the web browser 
+# None, print (just data), POISSON, SHEAR, LC, YOUNG, PUGH_RATIO, BULK,RATIO_COMPRESSIONAL_SHEAR,DEBYE_SPEED. You can use "all" for 2D only
+elateparameters = None
 
 # The parallel submiting commmd
 parallel_submit_command = vasp_cmd > log.vasp
@@ -358,6 +366,8 @@ parallel_submit_command = vasp_cmd > log.vasp
 ```
 
 Please ensure to replace placeholder values with your specific values, especially for parameters like `structure_file`, `repeat_num`, `potential_dir`, and `parallel_submit_command`. Always consult the relevant documentation and guidelines for your system and simulation needs.
+
+You can now directly view the spatial dependence of the elastic parameters using Elate. To do this, simply run "elastool -elate" after completing the strain-stress calculation and choose the browser of your choice.
     """
     print(help_text)
 

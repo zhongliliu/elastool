@@ -158,8 +158,8 @@ def strain_matrix(latt_system, up0):
         elif indict['dimensional'][0] == '1D':
             if latt_system == 'Nanotube':
                 strain_matrix_1 = array([[0, 0., 0.],
-                                         [0., up/2, 0.], 
-                                         [0., 0., up]])
+                                         [0., 0., up/2], 
+                                         [0., up/2, up]])
                 strain_matrix_list.append(strain_matrix_1)
 
     elif indict['strains_matrix'][0] == 'asess':

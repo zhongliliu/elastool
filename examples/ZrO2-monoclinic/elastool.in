@@ -2,16 +2,17 @@
 ### The input file to control the calculation details of elastic constants  ###
 ###############################################################################
 
-# run mode: 1 for automatic run, 2 for pre-processing, 3 for post-processing
+# run mode: 0 for generating key default input files, 1 for automatic run, 2 for pre-processing, 3 for post-processing
 # if 2, plz ensure the structure opt. is performed at fixed pressure or volume
 # i.e. CONTCAR and OUTCAR files both exist in ./OPT directory.
-run_mode = 1
+#Additionally, you can visualize elastic parameters directly using Elate by running "elastool -elate" after strain-stress calculations
+run_mode = 0
 
-# Define the dimensional of the system: 2D/3D
-dimensional = 3D
+# Define the dimensional of the system: 1D/2D/3D. 
+dimensional = 2D
 
 # the crystal structure file in vasp POSCAR (.vasp) or cif (.cif) format
-structure_file = ZrO2_mp-2858_primitive.cif
+structure_file = filename.vasp
 
 # if use conventional cell, no for primitive cell, yes for conventional cell
 if_conventional_cell = no
@@ -24,17 +25,24 @@ strains_matrix = ohess
 
 # strains list for deforming lattice cell, 0 will be neglected because of 
 # the initial optimization, if method_statistics = dynamic, the first one is used
-strains_list = -0.06 -0.03 0.03 0.06
+strains_list = -0.06 -0.03 0.03 0.06  
 
 # repeat numbers of three lattice vectors in conventional lattice for making
 # supercell of molecular dynamics simulations (method_statistics = dynamic)
-repeat_num = 2 2 2
+repeat_num = 1 1 1
 
 # last number of steps for sampling stresses used in the dynamic method
-num_last_samples = 1
+num_last_samples = 500
 
 #Potential directory - specify the location of your POTCAR files
 potential_dir = /user/potential/
 
+# Plot parameters EVGB for 2D. Second argument turns on interactive plotly. Do not turn on for high-throughput calculations 
+plotparameters = no,no
+
+# Choose Elate parameters to plot. Alternatively, after obtaining your elastic tensor, run "elastool -elate to view on the web browser 
+# None, print (just data), POISSON, SHEAR, LC, YOUNG, PUGH_RATIO, BULK,RATIO_COMPRESSIONAL_SHEAR,DEBYE_SPEED. You can use "all" for 2D only
+elateparameters = None
+
 # The parallel submiting commmd
-parallel_submit_command = mpirun -np 28 vasp544 > log.vasp
+parallel_submit_command = vasp_cmd > log.vasp

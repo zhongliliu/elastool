@@ -15,13 +15,12 @@
 
 """
 import os
-from ase.io import vasp, cif
+from ase.io import vasp, cif,read, write
 from os import system
 from os.path import isfile
 import subprocess
 from time import sleep
 from write_incar import write_incar
-from ase.io import vasp
 from read_input import indict
 from extract_mean_values import get_pressure, mean_pressure
 
@@ -38,7 +37,14 @@ def vasp_run(step, kpoints_file_name, cwd):
     if structure_file.endswith('.vasp'):
         pos = vasp.read_vasp(structure_file)
     elif structure_file.endswith('.cif'):
-        pos = cif.read_cif(structure_file)
+        #pos = cif.read_cif(structure_file,index=0)
+
+        atoms = read(structure_file)
+
+        # Convert to POSCAR format
+        poscar_file = os.path.join(cwd, 'POSCAR')
+        write(poscar_file, atoms, format='vasp')
+        pos = vasp.read_vasp(poscar_file)
     else:
         raise ValueError("Unsupported structure file format!")
 

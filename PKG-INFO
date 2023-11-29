@@ -1,6 +1,6 @@
-Metadata-Version: 1.0
+Metadata-Version: 3.0
 Name: elastool
-Version: 1.0.3
+Version: 3.0
 Summary: Elastic tool for finite-temperature elastic constants calculations
 Home-page: https://github.com/zhongliliu/elastool
 Author: Zhong-Li Liu and Chinedu Ekuma

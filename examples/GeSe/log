@@ -1,0 +1,13 @@
+
+Reading controlling parameters from elastool.in...
+
+Calculating stresses using the OHESS strain matrices...
+strain = -0.060
+strain = -0.030
+strain = -0.020
+strain = 0.020
+strain = 0.030
+strain = 0.060
+
+Fitting the first-order function to the collected 
+stress-strain data according to Hooke's law...

@@ -1,0 +1,104 @@
+❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤
+❤                          SUMMARY OF RESULTS                          ❤
+❤                                using                                 ❤
+❤                        ElasTool Version: 2.1                         ❤
+❤             Calculations ended at 11:34:04 on 2023-11-26             ❤
+❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤
++-====================================================================-+
+|             This is a 3D Cubic lattice.                              |
+|               Mean Pressure = -0.27 GPa                              |
++----------------------------------------------------------------------+
+| -------------------------------------------------------              |
+|        Elastic Constants and Mechanical Properties                   |
++----------------------------------------------------------------------+
+| C11 = 1015.72 GPa                                                    |
+| C12 = 136.77 GPa                                                     |
+| C44 = 550.62 GPa                                                     |
+| B_v = 429.76 GPa                                                     |
+| B_r = 429.76 GPa                                                     |
+| G_v = 506.16 GPa                                                     |
+| G_r = 500.03 GPa                                                     |
+| B_vrh = 429.76 GPa                                                   |
+| G_vrh = 503.10 GPa                                                   |
+| Young's modulus (E) = 1085.65 GPa                                    |
+| Poisson's ratio (V) = 0.08                                           |
+| Sound velocity (V_s) = 12.08 Km/s                                    |
+| Sound velocity (V_b) = 11.16 Km/s                                    |
+| Sound velocity (V_p) = 17.86 Km/s                                    |
+| Sound velocity (V_m) = 13.18 Km/s                                    |
+| Debye temperature (T_d) = 2185.09 K                                  |
+| Kleinman’s parameter (Q) = 0.31                                      |
+| Lame's parameter (M_1) = 94.36 N/m                                   |
+| Lame's parameter (M_2) = 503.10 N/m                                  |
+| Pugh's modulus ratio (P) = 0.85                                      |
+| Min thermal conductivity (K_clarke) = 6.62 W/(mK)                    |
+| Min thermal conductivity (K_cahill) = 3.84 W/(mK)                    |
+| Linear compressibility (C[100]) = 1.02e-03 GPa^-1                    |
+| Linear compressibility (C[110]) = 9.02e-04 GPa^-1                    |
+| Linear compressibility (C[010]) = 1.02e-03 GPa^-1                    |
+| Linear compressibility (C[111]) = 8.64e-04 GPa^-1                    |
+| Ductility test (D) = Material is brittle                             |
+| Strain Energy Density = 8.279e+09 J/m³                               |
+| -------------------------------------------------------              |
+| Elastic anisotropy:                                                  |
+| A_U = 0.0613                                                         |
+| A_C = 0.0061                                                         |
++----------------------------------------------------------------------+
+|                  Structural Stability Analysis                       |
++----------------------------------------------------------------------+
+|              λ_1    λ_2    λ_3    λ_4    λ_5    λ_6                  |
+| Eigenvalues: 550.615 550.615 550.615 878.948 878.948 1289.265        |
+| This structure is mechanically STABLE.                               |
++----------------------------------------------------------------------+
+| Hardness (H) and Fracture Toughness (F) Analysis                     |
+| WARNING: An empirical approximation; check validity!                 |
++----------------------------------------------------------------------+
+| Hardness (H1a) = 74.20 GPa;  Ref.[1]                                 |
+| Hardness (H1b) = 65.88 GPa;  Ref.[1]                                 |
+| Hardness (H1c) = 41.39 GPa;  Ref.[2]                                 |
+| Hardness (H2)  = 68.89 GPa;  Ref.[3]                                 |
+| Hardness (H3)  = 86.10 GPa;  Ref.[4]                                 |
+| Hardness (H4)  = 55.90 GPa;  Ref.[1]                                 |
+| Hardness (H5)  = 88.53 GPa;  Ref.[5]                                 |
+| Hardness (H6)  = 88.53 GPa;  Ref.[6]                                 |
+| Hardness (H7)  = 95.12 GPa;  Ref.[7]                                 |
+| Fracture Toughness (F1)  = 6.99 MPa m¹/₂;  Ref.[5]                   |
+| Fracture Toughness (F2)  = 6.79 MPa m¹/₂;  Ref.[6]                   |
+| Fracture Toughness (F3)  = 451.53 MPa m¹/₂;  Ref.[6]                 |
+| -------------------------------------------------------------------- |
+|    Cubic      Hexagonal  Orthorhombic   Rhombohedral  General        |
+| -------------------------------------------------------------------- |
+| I  All,F1-2   All,F1-2  H2,H6,H7,F1-2  All,F1-2  H2,H6,H7,F1-2       |
+| S  All,F1-2   All,F1-2  H2,H6,H7,F1-2  All,F1-2  H5,H6,H7,F1-2       |
+| M  H1a,H7,F3  H4,H7,F3  H4,H7,F3       H4,H7,F3  H4,H7,F3            |
+| -------------------------------------------------------------------- |
+| Insulator (I)     : bandgap > 2 eV                                   |
+| Semiconductor (S) : bandgap < 2 eV                                   |
+| Metal (M)         : bandgap = 0                                      |
+| -------------------------------------------------------------------- |
+| References                                                           |
++----------------------------------------------------------------------+
+| [1] Comp. Mater. Sci. 50 (2011)                                      |
+| [2] Scientific Reports, 3776 (2022)                                  |
+| [3] MRS Bull. 23, 22 (1998)                                          |
+| [4] J. Phys.: Condens. Matter 22 315503 (2010)                       |
+| [5] Intermetallics 19, 1275 (2011)                                   |
+| [6] J. Appl. Phys. 125, 065105 (2019)                                |
+| [7] J. Appl. Phys. 126, 125109 (2019)                                |
+|                                                                      |
++-====================================================================-+
++------------------------------------------------------------------------------+
+|                                 * CITATIONS *                                |
+| ---------------------------------------------------------------------------- |
+|           If you have used Elastool in your research, PLEASE cite:           |
+|                                                                              |
+|      ElasTool: An automated toolkit for elastic constants calculation,       |
+|         Z.-L. Liu, C.E. Ekuma, W.-Q. Li, J.-Q. Yang, and X.-J. Li,           |
+|             Computer Physics Communications 270, 108180, (2022)              |
+|                                                                              |
+|                                                                              |
+|          Efficient prediction of temperature-dependent elastic and           |
+|  mechanical properties of 2D materials, S.M. Kastuar, C.E. Ekuma, Z-L. Liu,  |
+|                   Nature Scientific Report 12, 3776 (2022)                   |
++------------------------------------------------------------------------------+
+

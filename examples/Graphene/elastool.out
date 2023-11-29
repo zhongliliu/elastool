@@ -1,12 +1,104 @@
-
-+================================================+
-|This is a 2D isotropy lattice.                  |
-|------------------------------------------------|
-|Mean Pressure = -0.02 GPa                       |
-|C11 = 353.23 N/m
-|C12 = 63.74 N/m
-|------------------------------------------------|
-|Structure stability analysis...                 |
-|This structure is mechanically STABLE.          |
-+================================================+
+❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤
+❤                          SUMMARY OF RESULTS                          ❤
+❤                                using                                 ❤
+❤                        ElasTool Version: 2.1                         ❤
+❤             Calculations ended at 21:24:58 on 2023-11-28             ❤
+❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤
++-====================================================================-+
+|             This is a 2D isotropy lattice.                           |
+|               Mean Pressure = -0.02 GPa                              |
++----------------------------------------------------------------------+
+| C11 = 355.09 N/m                                                     |
+| C12 = 62.87 N/m                                                      |
+| Sound velocity (V_l[10]) = 21.66 Km/s                                |
+| Sound velocity (V_l[01]) = 21.66 Km/s                                |
+| Sound velocity (V_s[10]) = 13.90 Km/s                                |
+| Sound velocity (V_s[01]) = 13.90 Km/s                                |
+| Sound velocity (V_m[10]) = 16.54 Km/s                                |
+| Sound velocity (V_m[01]) = 16.54 Km/s                                |
+| Debye temperature (T_d[10]) = 2757.56 K                              |
+| Debye temperature (T_d[01]) = 2757.56 K                              |
+| Young's modulus (Y[10]) = 343.96 N/m                                 |
+| Young's modulus (Y[01]) = 343.96 N/m                                 |
+| Shear modulus (G[10]) = 146.11 N/m                                   |
+| Shear modulus (G[01]) = 146.11 N/m                                   |
+| Poisson's ratio (V[10]) = 0.18                                       |
+| Poisson's ratio (V[01]) = 0.18                                       |
+| Stiffness constant (B[10]) = 208.98 N/m                              |
+| Stiffness constant (B[01]) = 208.98 N/m                              |
+| Layer modulus (L) = 208.98 N/m                                       |
+| Kleinman’s parameter (Q) = 0.36                                      |
+| Lame's parameter (M_1) = 80.10 N/m                                   |
+| Lame's parameter (M_2) = 146.11 N/m                                  |
+| Pugh's modulus ratio (P[10]) = 1.43                                  |
+| Pugh's modulus ratio (P[01]) = 1.43                                  |
+| Min thermal conductivity (K_clarke) = 4.86 W/(mK)                    |
+| Min thermal conductivity (K_cahill) = 1.75 W/(mK)                    |
+| Linear compressibility (C[100]) = 2.91e-03 m/N                       |
+| Linear compressibility (C[110]) = 6.82e-04 m/N                       |
+| Linear compressibility (C[010]) = 2.91e-03 m/N                       |
+| Linear compressibility (C_avg) = 2.17e-03 m/N                        |
+| Ductility test (D) = Material is brittle                             |
+| Strain Energy Density = 1.881e+00 J/m²                               |
+| -------------------------------------------------------              |
+| Elastic anisotropy:                                                  |
+| A_U = 0.0000                                                         |
++----------------------------------------------------------------------+
+|                  Structural Stability Analysis                       |
++----------------------------------------------------------------------+
+|              λ_1    λ_2    λ_3                                       |
+| Eigenvalues: 146.109 292.219 417.959                                 |
+| This structure is mechanically STABLE.                               |
++----------------------------------------------------------------------+
+| Hardness (H) and Fracture Toughness (F) Analysis                     |
+| WARNING: An empirical approximation; check validity!                 |
++----------------------------------------------------------------------+
+| Hardness (H1a) = 21.55 N/m;  Ref.[1]                                 |
+| Hardness (H1b) = 20.87 N/m;  Ref.[1]                                 |
+| Hardness (H1c) = 20.12 N/m;  Ref.[2]                                 |
+| Hardness (H2)  = 21.82 N/m;  Ref.[3]                                 |
+| Hardness (H3)  = 22.95 N/m;  Ref.[4]                                 |
+| Hardness (H4)  = 19.11 N/m;  Ref.[1]                                 |
+| Hardness (H5)  = 21.30 N/m;  Ref.[5]                                 |
+| Hardness (H6)  = 26.41 N/m;  Ref.[6]                                 |
+| Hardness (H7)  = 21.50 N/m;  Ref.[7]                                 |
+| Fracture Toughness (F1)  = 1.070e-01 Nm⁻³/₂; Ref.[5]                 |
+| Fracture Toughness (F2)  = 9.333e-02 Nm⁻³/₂;  Ref.[6]                |
+| Fracture Toughness (F3)  = 6.205e+00 Nm⁻³/₂;  Ref.[6]                |
+| -------------------------------------------------------------------- |
+|    Isotropy   Tetragonal  Orthotropy  Anisotropy   General           |
+| -------------------------------------------------------------------- |
+| I  All,F1-2   All,F1-2  All,F1-2  X-H2-4,F1-2  X-H2-4,F1-2           |
+| S  All,F1-2   All,F1-2  All,F1-2  X-H2-4,F1,F2  H5-7,F1-2            |
+| M  H1a,H7,F3  H4,H7,F3  H1a,H7,F3  H1a,H7,F3    X-H2-4,H7,F3         |
+| -------------------------------------------------------------------- |
+| Insulator (I)     : bandgap > 2 eV                                   |
+| Semiconductor (S) : bandgap < 2 eV                                   |
+| Metal (M)         : bandgap = 0                                      |
+| -------------------------------------------------------------------- |
+| References                                                           |
++----------------------------------------------------------------------+
+| [1] Comp. Mater. Sci. 50 (2011)                                      |
+| [2] Scientific Reports, 3776 (2022)                                  |
+| [3] MRS Bull. 23, 22 (1998)                                          |
+| [4] J. Phys.: Condens. Matter 22 315503 (2010)                       |
+| [5] Intermetallics 19, 1275 (2011)                                   |
+| [6] J. Appl. Phys. 125, 065105 (2019)                                |
+| [7] J. Appl. Phys. 126, 125109 (2019)                                |
+|                                                                      |
++-====================================================================-+
++------------------------------------------------------------------------------+
+|                                 * CITATIONS *                                |
+| ---------------------------------------------------------------------------- |
+|           If you have used Elastool in your research, PLEASE cite:           |
+|                                                                              |
+|      ElasTool: An automated toolkit for elastic constants calculation,       |
+|         Z.-L. Liu, C.E. Ekuma, W.-Q. Li, J.-Q. Yang, and X.-J. Li,           |
+|             Computer Physics Communications 270, 108180, (2022)              |
+|                                                                              |
+|                                                                              |
+|          Efficient prediction of temperature-dependent elastic and           |
+|  mechanical properties of 2D materials, S.M. Kastuar, C.E. Ekuma, Z-L. Liu,  |
+|                   Nature Scientific Report 12, 3776 (2022)                   |
++------------------------------------------------------------------------------+
 

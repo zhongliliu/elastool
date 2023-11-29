@@ -1,0 +1,23 @@
+
+Reading controlling parameters from elastool.in...
+
+Calculating stresses using the OHESS strain matrices...
+strain = -0.060
+strain = -0.030
+strain = -0.020
+strain = 0.020
+strain = 0.030
+strain = 0.060
+
+Fitting the first-order function to the collected 
+stress-strain data according to Hooke's law...
+Traceback (most recent call last):
+  File "/home/chineduekuma/codes/anaconda2/envs/py3/bin/elastool", line 4, in <module>
+    __import__('pkg_resources').run_script('elastool==1.1.0', 'elastool')
+  File "/home/chineduekuma/codes/anaconda2/envs/py3/lib/python3.8/site-packages/pkg_resources/__init__.py", line 667, in run_script
+    self.require(requires)[0].run_script(script_name, ns)
+  File "/home/chineduekuma/codes/anaconda2/envs/py3/lib/python3.8/site-packages/pkg_resources/__init__.py", line 1471, in run_script
+    exec(script_code, namespace, namespace)
+  File "/home/chineduekuma/codes/anaconda2/envs/py3/lib/python3.8/site-packages/elastool-1.1.0-py3.8.egg/EGG-INFO/scripts/elastool", line 138, in <module>
+  File "/home/chineduekuma/codes/anaconda2/envs/py3/lib/python3.8/site-packages/elastool-1.1.0-py3.8.egg/sound_velocity.py", line 78, in sound_velocity
+ValueError: math domain error

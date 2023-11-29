@@ -1,0 +1,95 @@
+❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤
+❤                          SUMMARY OF RESULTS                          ❤
+❤                                using                                 ❤
+❤                        ElasTool Version: 2.0                         ❤
+❤             Calculations ended at 21:23:47 on 2023-10-21             ❤
+❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤
++-====================================================================-+
+|             This is a 2D orthotropy lattice.                         |
+|               Mean Pressure = -0.01 GPa                              |
++----------------------------------------------------------------------+
+| C11 = 59.12 N/m                                                      |
+| C12 = 33.71 N/m                                                      |
+| C22 = 36.70 N/m                                                      |
+| C66 = 26.17 N/m                                                      |
+| Sound velocity (V_la) = 2.94 Km/s                                    |
+| Sound velocity (V_lb) = 7.76 Km/s                                    |
+| Sound velocity (V_sa) = 1.36 Km/s                                    |
+| Sound velocity (V_sb) = 1.57 Km/s                                    |
+| Sound velocity (V_ma) = 1.75 Km/s                                    |
+| Sound velocity (V_mb) = 2.17 Km/s                                    |
+| Debye temperature (T_da) = 230.90 K                                  |
+| Debye temperature (T_db) = 286.45 K                                  |
+| Young's modulus (Y_2da) = 17.47 N/m                                  |
+| Young's modulus (Y_2db) = 28.15 N/m                                  |
+| Shear modulus (G_a) = 5.56 N/m                                       |
+| Shear modulus (G_b) = 7.34 N/m                                       |
+| Poisson's ratio (V_a) = 0.57                                         |
+| Poisson's ratio (V_b) = 0.92                                         |
+| Stiffness constant (B_a) = 20.33 N/m                                 |
+| Stiffness constant (B_b) = 172.94 N/m                                |
+| Layer modulus (L) = 40.81 N/m                                        |
+| Pugh's modulus ratio (P_a) = 3.65                                    |
+| Pugh's modulus ratio (P_b) = 23.57                                   |
+| Ductility test (D) = Material is ductile                             |
+| Strain Energy = 2.1273 eV                                            |
+| Energy Density = 6.440e+02 J/m^3                                     |
++----------------------------------------------------------------------+
+|                  Structural Stability Analysis                       |
++----------------------------------------------------------------------+
+|              λ_1    λ_2    λ_3                                       |
+| Eigenvalues: 12.382 26.169 83.435                                    |
+| This structure is mechanically STABLE.                               |
++----------------------------------------------------------------------+
+| Hardness (H) and Fracture Toughness (F) Analysis                     |
+| WARNING: An empirical approximation; check validity!                 |
++----------------------------------------------------------------------+
+| Hardness (H1a) = 0.95 N/m;  Ref.[1]                                  |
+| Hardness (H1b) = 1.38 N/m;  Ref.[1]                                  |
+| Hardness (H1c) = 9.31 N/m;  Ref.[2]                                  |
+| Hardness (H2)  = 1.45 N/m;  Ref.[3]                                  |
+| Hardness (H3)  = -1.76 N/m;  Ref.[4]                                 |
+| Hardness (H4)  = -4.51 N/m;  Ref.[1]                                 |
+| Hardness (H5)  = -2.75 N/m;  Ref.[5]                                 |
+| Hardness (H6)  = -0.82 N/m;  Ref.[6]                                 |
+| Hardness (H7)  = 1.17 N/m;  Ref.[7]                                  |
+| Fracture Toughness (F1)  = 5.06 MN/m⁻¹/₂; Ref.[5]                    |
+| Fracture Toughness (F2)  = nan MN/m⁻¹/₂;  Ref.[6]                    |
+| Fracture Toughness (F3)  = nan MN/m⁻¹/₂;  Ref.[6]                    |
+| -------------------------------------------------------------------- |
+|    Isotropy   Tetragonal  Orthotropy  Anisotropy   General           |
+| -------------------------------------------------------------------- |
+| I  All,F1-2   All,F1-2  All,F1-2  X-H2-4,F1-2  X-H2-4,F1-2           |
+| S  All,F1-2   All,F1-2  All,F1-2  X-H2-4,F1,F2  H5-7,F1-2            |
+| M  H1a,H7,F3  H4,H7,F3  H1a,H7,F3  H1a,H7,F3    X-H2-4,H7,F3         |
+| -------------------------------------------------------------------- |
+| Insulator (I)     : bandgap > 2 eV                                   |
+| Semiconductor (S) : bandgap < 2 eV                                   |
+| Metal (M)         : bandgap = 0                                      |
+| -------------------------------------------------------------------- |
+| References                                                           |
++----------------------------------------------------------------------+
+| [1] Comp. Mater. Sci. 50 (2011)                                      |
+| [2] Scientific Reports, 3776 (2022)                                  |
+| [3] MRS Bull. 23, 22 (1998)                                          |
+| [4] J. Phys.: Condens. Matter 22 315503 (2010)                       |
+| [5] Intermetallics 19, 1275 (2011)                                   |
+| [6] J. Appl. Phys. 125, 065105 (2019)                                |
+| [7] J. Appl. Phys. 126, 125109 (2019)                                |
+|                                                                      |
++-====================================================================-+
++------------------------------------------------------------------------------+
+|                                 * CITATIONS *                                |
+| ---------------------------------------------------------------------------- |
+|           If you have used Elastool in your research, PLEASE cite:           |
+|                                                                              |
+|      ElasTool: An automated toolkit for elastic constants calculation,       |
+|         Z.-L. Liu, C.E. Ekuma, W.-Q. Li, J.-Q. Yang, and X.-J. Li,           |
+|             Computer Physics Communications 270, 108180, (2022)              |
+|                                                                              |
+|                                                                              |
+|          Efficient prediction of temperature-dependent elastic and           |
+|  mechanical properties of 2D materials, S.M. Kastuar, C.E. Ekuma, Z-L. Liu,  |
+|                   Nature Scientific Report 12, 3776 (2022)                   |
++------------------------------------------------------------------------------+
+

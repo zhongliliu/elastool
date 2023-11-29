@@ -15,6 +15,7 @@
 
 """
 from pandas import DataFrame
+import pandas as pd
 from numpy import nan
 
 
@@ -34,7 +35,8 @@ def get_stress(outcar_file, tag):
             if num_record == 0:
                 df = df_new
             else:
-                df = df.append(df_new, ignore_index=True)
+                #f = df.append(df_new, ignore_index=True)
+                df = pd.concat([df, df_new], ignore_index=True)
             num_record += 1
     return df
 
@@ -64,7 +66,9 @@ def get_pressure(outcar_file):
             if num_record == 0:
                 df = df_new
             else:
-                df = df.append(df_new, ignore_index=True)
+                #f = df.append(df_new, ignore_index=True)
+                df = pd.concat([df, df_new], ignore_index=True)
+
             num_record += 1
     return df
 

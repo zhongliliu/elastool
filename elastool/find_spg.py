@@ -16,6 +16,133 @@
 """
 from spglib import spglib
 from read_input import indict
+import os
+import numpy as np
+from pymatgen.core import Structure
+from ase.build import cut
+import matplotlib.pyplot as plt
+import copy
+
+
+class Bravais2D:
+    """ 
+    Class to analyze 2D bravais lattice type based on given structure.
+
+    Args:
+        struct: Pymatgen structure object.
+        eps_r: Tolerance for comparing lengths.
+        eps_a: Tolerance for comparing angles.
+        numpoints: The number of desired points to plot. Must be a square number >= 9.
+    """
+
+    def __init__(self, struct, dist_acc=0.1, angl_acc=0.5, numpoints=16):
+        self.struct = struct
+        lattice = struct.get_cell_lengths_and_angles()
+        self.a = lattice[0]
+        self.b = lattice[1]
+        self.c = lattice[2]
+        self.dist_acc = dist_acc
+        self.angl_acc = angl_acc
+        self.centered = self._get_centered()
+        self._numpoints = numpoints
+        self.gamma = lattice[5]
+
+
+
+
+
+    def _get_centered(self):
+        copied_struct = copy.deepcopy(self.struct)
+        primitive_struct = cut(copied_struct)
+        if len(self.struct) != len(primitive_struct):
+            return True
+        else:
+            return False
+
+    @property
+    def a_vec(self):
+        return np.array([self.a, 0])
+
+    @property
+    def b_vec(self):
+        return np.array([self.b * np.cos(self.gamma), self.b * np.sin(self.gamma)])
+
+    @property
+    def lattice_type(self):
+        if self.c > self.a and self.c > self.b:
+            if abs(self.a - self.b) <= self.dist_acc:
+                if abs(self.gamma - 120) <= self.angl_acc or abs(self.gamma - 60) <= self.angl_acc:  # The last part is for some 2D systems
+                    return 'Isotropy'  # This is 2D Hexagonal system
+                elif abs(self.gamma - 90) <= self.angl_acc:
+                    return 'Tetragonal'
+            else:
+                if abs(self.gamma - 90) <= self.angl_acc:
+                    return 'Orthotropy'
+                else:
+                    return 'Anisotropy'
+        else:
+            print('ERROR: the vacuum is not along the c axis!!!\n')
+            print('Plz adjust the vacuum to be along the c axis!!!\n')
+            exit(1)
+
+
+    @property
+    def unit_cell_area(self):
+        return self.a * self.b * np.sin(self.gamma)
+
+    @property
+    def numpoints(self):
+        val = round(self._numpoints**0.5, 0)**2
+        if val == self._numpoints and val >= 9:
+            return self._numpoints
+        else:
+            raise Exception("numpoints must be a square number >= 9.")
+
+
+    def _find_points(self):
+        """ Finds all the x and y coordinates of the lattice.
+        :return: (list(list)) x, y
+        """
+
+        def f(start, stop, x_list, y_list):
+            for j in np.arange(start, stop):
+                for i in np.arange(start, stop):
+                    vec = i*self.a_vec + j*self.b_vec
+                    x_list.append(vec[0])
+                    y_list.append(vec[1])
+            return x_list, y_list
+
+        p = int(self.numpoints**0.5)
+        x, y = f(0, p, [], [])
+        if self.centered:
+            x, y = f(0.5, p - 1, x, y)
+        return x, y
+
+
+    def _unit_cell(self, x, y):
+        """ Finds the x and y coordinates for the unit cell.
+        :param x: (list) The x coordinates of the lattice points.
+        :param y: (list) The y coordinates of the lattice points.
+        :return: (list(list()) x, y
+        """
+
+        root = int(self.numpoints**0.5)
+        return (x[0], x[1], x[1+root], x[root], x[0]), (y[0], y[1], y[1+root], y[root], y[0])
+
+
+    def plot(self,filename='bravais_lattice.png'):
+        """Creates a 2D scatter plot of the Bravais lattice."""
+        x, y = self._find_points()
+        fig, ax = plt.subplots()
+        angle = f"{self.gamma:.2f}"
+        title = f"Bravais Lattice: {self.lattice_type}\n|a| = {self.a:.3f}, |b| = {self.b:.3f}, \u03b8  =  {self.gamma:.3f}\u00b0"
+        ax.set_title(title)
+        ax.scatter(x, y, label="Lattice Points")
+        ax.plot(*self._unit_cell(x, y), color="darkorange", label="Unit Cell")
+        plt.legend(loc="best")
+        plt.savefig(filename, format='png', dpi=300)
+        #plt.show()
+        plt.close(fig)
 
 def findspg(atoms):
     spg0 = spglib.get_spacegroup(atoms, symprec=0.1)
@@ -29,7 +156,7 @@ def findspg(atoms):
     return spg
 
 
-def find_crystal_system(pos_conv, dimensional,tubestrain_type):
+def find_crystal_system(pos_conv, dimensional,tubestrain_type,plotparameters):
     
     if dimensional == '1D':
         latt_system = 'Nanotube'  # Default value
@@ -77,6 +204,15 @@ def find_crystal_system(pos_conv, dimensional,tubestrain_type):
             print('ERROR: the vacuum is not along the c axis!!!\n')
             print('Plz adjust the vacuum to be along the c axis!!!\n')
             exit(1)
+
+
+        if plotparameters:
+            #print("Before:", pos_conv)
+            bravais = Bravais2D(pos_conv)
+            #print("After:", pos_conv)
+            bravais_lattice_type = bravais.lattice_type
+            print(f"Bravais Lattice Type: {bravais_lattice_type}")
+            bravais.plot()
 
     elif dimensional == '3D':
         spg = findspg(pos_conv)

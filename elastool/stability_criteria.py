@@ -152,6 +152,7 @@ def criteria(elastic_constants_dict, latt_system):
 #1D crystal
     elif latt_system == 'Nanotube':
         condition1 = elastic_constants_dict['c33'] > 0 
+        condition2 = elastic_constants_dict['c33'] > elastic_constants_dict['c23']
 
     else:
         print('Crystal system is not parsed correctly!!!')

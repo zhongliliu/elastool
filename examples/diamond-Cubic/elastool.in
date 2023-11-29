@@ -28,13 +28,19 @@ strains_list = -0.06 -0.03 0.03 0.06
 
 # repeat numbers of three lattice vectors in conventional lattice for making
 # supercell of molecular dynamics simulations (method_statistics = dynamic)
-repeat_num = 2 2 2
+repeat_num = 3 3 3
 
 # last number of steps for sampling stresses used in the dynamic method
-num_last_samples = 1
+num_last_samples = 1000
 
-#Potential directory - specify the location of your POTCAR files
-potential_dir = /user/potential/
+potential_dir = /home/chineduekuma/codes/vasp/PBE
+
+# Plot parameters EVGB for 2D. Second argument turns on interactive plotly. Do not turn on for high-throughput calculations 
+plotparameters = yes,no
+
+# Choose Elate parameters to plot. Alternatively, after obtaining your elastic tensor, run "elastool -elate to view on the web browser 
+# None, print (just data), POISSON, SHEAR, LC, YOUNG, PUGH_RATIO, BULK,RATIO_COMPRESSIONAL_SHEAR,DEBYE_SPEED. You can use "all" for 2D only
+elateparameters = none
 
 # The parallel submiting commmd
-parallel_submit_command = mpirun -np 28 vasp544 > log.vasp
+parallel_submit_command = mpirun -np 2 vasp_std > log.vasp

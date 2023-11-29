@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import sys
+import os
+import numpy as np
 from datetime import datetime
 from os import getcwd, mkdir, chdir
 from os.path import isdir, isfile
@@ -11,18 +13,19 @@ from deform_cell_ulics import deform_cell_ulics
 from make_conv_cell import make_conventional_cell
 from read_input import indict
 from relax_atoms_pos import relax_atoms_pos
-from calc_stress import calc_stress
+from calc_stress import calc_stress, calculate_total_energy_density
 from optimize_initial_str import optimize_initial_str
 from extract_mean_values import mean_stress,mean_pressure,mean_temperature,mean_volume
 from ase.io import vasp
 from equilibrium_md import equil_md
 from stability_criteria import criteria
 from sound_velocity import sound_velocity
-import pkg_resources
+from importlib.metadata import version
+
 import warnings
 warnings.filterwarnings('ignore')
 
-version = pkg_resources.get_distribution("ElasTool").version
+version = version("ElasTool") #pkg_resources.get_distribution("ElasTool").version
 #---------------------------------------------------------
 #Print out citation
 def print_boxed_message(ec_file=None):
@@ -53,7 +56,6 @@ def print_boxed_message(ec_file=None):
 
     output_line(header_footer)
     
-    # Loop through each line, printing it within the box
     for line, underline in lines:
         centered_line = line.center(76)
         output_line("| " + centered_line + " |")
@@ -68,7 +70,7 @@ def print_boxed_message(ec_file=None):
 
 
 def write_line(ec_file, content, padding=1, border_char="|", filler_char=" "):
-    content_width = max_width - (2 * padding) - 2  # Subtract 2 for the border characters
+    content_width = int(max_width) - (2 * int(padding)) - 2  # Subtract 2 for the border characters
     content = content[:content_width]  # Ensure content doesn't exceed the width
     line = border_char + filler_char*padding + content.ljust(content_width) + filler_char*padding + border_char
     ec_file.write(line + "\n")
@@ -114,31 +116,85 @@ if method_stress_statistics == 'static':
 cwd = getcwd()
 structure_file = indict['structure_file'][0]
 
-
-
 # optimize the initial structure at fixed pressure/volume
-if run_mode == 1 and not isfile('%s/OPT/CONTCAR'%cwd):
+if run_mode == 1 and not os.path.isfile('%s/OPT/CONTCAR'%cwd):
     pos_conv = make_conventional_cell(structure_file)
     pos_optimized = optimize_initial_str(pos_conv, cwd, 'fixed-pressure-opt')
 else:
+    outcar_path = os.path.join(cwd, 'OPT', 'OUTCAR')
+    
+    if os.path.isfile(outcar_path):
+        with open(outcar_path, 'r') as file:
+            content = file.read()
+            
+        if "reached required accuracy" not in content:
+            framed_message = [
+                "***********************************************",
+                "* No optimized structure found in the OPT     *",
+                "* directory. Please remove directory and     *",
+                "* rerun the step to obtain optimized          *",
+                "* structure. If using automatic approach, set *",
+                "* run_mode = 1                                *",
+                "***********************************************"
+            ]
+            for line in framed_message:
+                print(line)
+            pass
+            sys.exit() 
+    elif 'pos_conv' in locals() and 'pos_optimized' in locals() and set(pos_conv.get_chemical_symbols()) != set(pos_optimized.get_chemical_symbols()):#set(pos_conv.get_chemical_symbols()) != set(pos_optimized.get_chemical_symbols()):
+        framed_message = [
+            "***********************************************",
+            "* Structures in CONTCAR and initial atom      *",
+            "* objects do not match remove the OPT dir     *",
+            "* and rerun the step to obtain optimized       *",
+            "* structure. If using automatic approach, set *",
+            "* run_mode = 1                                *",
+            "***********************************************"
+        ]
+        for line in framed_message:
+            print(line)
+        pass
+        sys.exit() 
+    else:
+        print("CONTCAR file not found in the OPT directory. Structure not yet optimized")
+        sys.exit() 
+    
     pos_optimized = vasp.read_vasp('%s/OPT/CONTCAR'%cwd)
-
-
 
 
 tubestrain_type = "Nanotube" #indict['tubestrain_type'][0] #For potential extension to other forms of strain in 1D
 
+plotparameters = indict.get('plotparameters', [])
 
-latt_system = find_crystal_system(pos_optimized, dimensional,tubestrain_type)
+for index, param in enumerate(plotparameters):
+    if param.lower() == 'yes':
+        plotparameters[index] = True
+    elif param.lower() == 'no':
+        plotparameters[index] = False
+    else:
+        print(f"Warning: Invalid value for 'plotparameters' at position {index}: {param}. Using default value (no).")
+        plotparameters[index] = False
+
+
+
+#elateparameters = indict['elateparameters'][0]
+#elateparameters = indict.get('elateparameters', [])
+elateparameters = [param.upper() for param in indict.get('elateparameters', [])]
+
+
+
+latt_system = find_crystal_system(pos_optimized, dimensional,tubestrain_type,plotparameters)
+
+
 
 if dimensional == '1D':
     if latt_system == 'Nanotube':
          tubestrain_type = 'Nanotube'
     else:
         print('Choose a type of strain for the 1D system!!!')
-        exit(1)
+        sys.exit(1)
   
-#if dimensional == '3D':
+
 if method_stress_statistics == 'dynamic':
     equil_md(pos_optimized, cwd)
     tag = 'Total+kin.'
@@ -197,7 +253,6 @@ else:
     print("Preparing necessary files using the %s strain matrices..." % strains_matrix.upper())
 
 
-
 for up in delta_list:
     print("strain = %.3f" % up)
     if up != 0:
@@ -221,25 +276,33 @@ for up in delta_list:
             # relax atoms positoins int the strained structure
             #pos_conv_strain = relax_atoms_pos(pos_optimized, cell_strain, cwd)
             # calculate stresses
-            stress_set_dict = calc_stress(pos_optimized, cell_strain, method_stress_statistics, stress_set_dict, num_last_samples, up, cwd)
+            stress_set_dict, strain_energy_stress = calc_stress(pos_optimized, cell_strain, method_stress_statistics, stress_set_dict, num_last_samples, up, cwd)
+
             chdir('..')
         chdir('..')
 chdir('..')
 
+
+#total_strain_energy, total_energy_density = calculate_total_energy_density(strain_energy_stress[0], strain_energy_stress[1], strain_energy_stress[2], dimensional, pos_optimized)
+
+
 # Estimate the max width based on the longest expected line:
-max_width = len("|This is a 3D hexagonal lattice with simple shear. |")
+max_width = len("|WARNING: This is an empirical approx; validity needs to be checked !! |")
+
 
 
 if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
     print("")
     print("Fitting the first-order function to the collected \nstress-strain data according to Hooke's law...")
 
-    elastic_constants_dict = calc_elastic_constants(
-        pos_optimized, latt_system, {}, stress_set_dict)
+    elastic_constants_dict,elastic_tensor, SEDF_values = calc_elastic_constants(pos_optimized, latt_system, {}, stress_set_dict,dimensional, plot=plotparameters[0])
+    
 
-    elastic_constants_dict = sound_velocity(
-        elastic_constants_dict, cwd, dimensional, latt_system)
+    elastic_constants_dict,hardness_values = sound_velocity(
+        elastic_constants_dict, elastic_tensor,cwd, dimensional, latt_system,plotparameters,elateparameters)
 
+    eigenvals,_ = np.linalg.eig(elastic_tensor)
+    eigenvals = sorted(eigenvals)
     longdash = '-' * 55
 
     with open('elastool.out', 'w') as ec_file:
@@ -248,30 +311,56 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
         write_line(ec_file, "=" * max_width, border_char="+", filler_char="-")
 
         if dimensional == '1D':
-            description = "This is a %2s %s" % (
+            description = "            This is a %2s %s" % (
                 indict['dimensional'][0],   tubestrain_type + ' lattice.')
         else:
-            description = "This is a %2s %s" % (
+            description = "            This is a %2s %s" % (
                 indict['dimensional'][0], latt_system + ' lattice.')
 
         write_line(ec_file, description)
-        write_line(ec_file, "Mean Pressure = %s GPa" %
+        write_line(ec_file, "              Mean Pressure = %s GPa" %
                    str("%.2f" % mean_press))
-
+        write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
         if method_stress_statistics == 'dynamic':
-            write_line(ec_file, "Mean Temperature =  %s K" % str(mean_temp))
+            write_line(ec_file, "        Mean Temperature =  %s K" % str(mean_temp))
 
         print_anisotropy = False
+        print_hardness = False
+
         try:
-            G_V = elastic_constants_dict['G_v']
-            G_R = elastic_constants_dict['G_r']
-            B_V = elastic_constants_dict['B_v']
-            B_R = elastic_constants_dict['B_r']
-            A_U = 5 * G_V / G_R + B_V / B_R - 6
-            A_C = (G_V - G_R) / (G_V + G_R)
-            print_anisotropy = True
+            if dimensional == '2D':
+                Cs = np.linalg.inv(elastic_tensor)
+                C11 = elastic_tensor[0,0]
+                C22 = elastic_tensor[1,1]
+                C12 = elastic_tensor[0,1]
+                C66 = elastic_tensor[2,2]
+
+                S11 = Cs[0, 0] 
+                S22 = Cs[1, 1]
+                S12 = Cs[0, 1]
+                S66 = Cs[2, 2]
+
+                B_R = 1./(S11 + S22 +2*S12)
+                B_V = (C11+C22+2*C12)/4.  #Extreme Mechanics Letters, 34, 100615 (2020)
+                G_R = 2./(S11 + S22 - 2*S12 + S66)
+                G_V = (C11 + C22 -2*C12 +4 *C66)/8. 
+                A_U = 2 * G_V / G_R + B_V / B_R - 3
+                print_anisotropy = True
+                print_hardness = True
+            elif dimensional == '3D':
+                G_V = elastic_constants_dict['G_v']
+                G_R = elastic_constants_dict['G_r']
+                B_V = elastic_constants_dict['B_v']
+                B_R = elastic_constants_dict['B_r']
+                A_U = 5 * G_V / G_R + B_V / B_R - 6
+                A_C = (G_V - G_R) / (G_V + G_R)
+                print_anisotropy = True
+                print_hardness = True
+            #else:
+            #    print("Invalid dimensionality specified.")
         except:
             pass
+            
 
         has_print_ec = False
         has_print_moduli = False
@@ -281,7 +370,8 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
             if dimensional == '3D':
                 if key[0] == 'c' and not has_print_ec:
                     write_line(ec_file, longdash)
-                    write_line(ec_file, "Elastic constants:")
+                    write_line(ec_file, "       Elastic Constants and Mechanical Properties ")
+                    write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
                     has_print_ec = True
 
                 content_mapping = {
@@ -291,29 +381,60 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
                     'E': "Young's modulus (%s) = %s GPa",
                     'v': "Poisson's ratio (%s) = %s",
                     'V': "Sound velocity (%s) = %s Km/s",
-                    'T': "Debye temperature (%s) = %s K"
+                    'P': "Pugh's modulus ratio (%s) = %s",
+                    'M': "Lame's parameter (%s) = %s N/m",
+                    'Q': "Kleinman’s parameter (%s) = %s",
+                    'T': "Debye temperature (%s) = %s K",
+                    'K': "Min thermal conductivity (%s) = %s W/(mK)",
+                    'C': "Linear compressibility (%s) = %.2e TPa^-1", 
+                    'D': "Ductility test (%s) = %s" 
+ 
                 }
 
                 content = content_mapping.get(key[0], None)
                 if content:
-                    write_line(ec_file, content %
-                               (key.capitalize(), "%.2f" % elastic_constants_dict[key]))
+                    if key[0] == "C":
+                        write_line(ec_file, content % (key.capitalize(), elastic_constants_dict[key]))
+                    elif key[0] not in ["D"]:
+                        write_line(ec_file, content %
+                                   (key.capitalize(), "%.2f" % elastic_constants_dict[key]))
+                    else:
+                        write_line(ec_file, content % (key.capitalize(), elastic_constants_dict[key]))  
 
             elif dimensional == '2D':
+                #print_hardness = False
                 content_mapping = {
                     'c': "%s = %s N/m",
                     'Y': "Young's modulus (%s) = %s N/m",
                     'v': "Poisson's ratio (%s) = %s",
-                    'B': "In-plane stiffness (%s) = %s N/m",
+                    'B': "Stiffness constant (%s) = %s N/m",
                     'G': "Shear modulus (%s) = %s N/m",
                     'V': "Sound velocity (%s) = %s Km/s",
-                    'T': "Debye temperature (%s) = %s K"
+                    'P': "Pugh's modulus ratio (%s) = %s",
+                    'L': "Layer modulus (%s) = %s N/m",
+                    'T': "Debye temperature (%s) = %s K",
+                    'M': "Lame's parameter (%s) = %s N/m",
+                    'Q': "Kleinman’s parameter (%s) = %s",
+                    'R': "Resonance frequency (%s) = %s GHz",
+                    'K': "Min thermal conductivity (%s) = %s W/(mK)",
+                    'C': "Linear compressibility (%s) = %.2e m/N", 
+                    'D': "Ductility test (%s) = %s" 
                 }
 
                 content = content_mapping.get(key[0], None)
                 if content:
-                    write_line(ec_file, content %
-                               (key.capitalize(), "%.2f" % elastic_constants_dict[key]))
+                    if key[0] == "C":
+                        write_line(ec_file, content % (key.capitalize(), elastic_constants_dict[key]))
+                    elif key[0] not in ["D"]:
+                        write_line(ec_file, content %
+                                   (key.capitalize(), "%.2f" % elastic_constants_dict[key]))
+
+                    else:
+                        write_line(ec_file, content % (key.capitalize(), elastic_constants_dict[key]))  
+
+
+
+
 
             elif dimensional == '1D':
                 content_mapping = {
@@ -322,39 +443,246 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
                     'v': "Poisson's ratio (%s) = %s",
                     'B': "Bulk modulus (%s) = %s GPa",
                     'G': "Shear modulus (%s) = %s GPa",
-                    'C': "Compliance (%s) = %s GPa^-1",
-                    'R': "Resonance frequency (%s) = %s GHz",
+                    'Rf': "Resonance frequency (%s) = %s GHz",
                     'V': "Sound velocity (%s) = %s Km/s",
-                    'T': "Debye temperature (%s) = %s K"
+                    'P': "Pugh's modulus ratio (%s) = %s",
+                    'T': "Debye temperature (%s) = %s K",
+                    'K': "Min thermal conductivity (%s) = %s W/(mK)",
+                    'C': "Linear compressibility (%s) = %.2e TPa^-1", 
+                    'D': "Ductility test (%s) = %s" 
                 }
 
                 content = content_mapping.get(key[0], None)
                 if content:
-              #      if key in ['C', 'R']:
-              #          write_line(ec_file, content %
-              #                     (key.capitalize(), "%.2e" % elastic_constants_dict[key]))
-              #      else:
-              #          write_line(ec_file, content %
-              #                     (key.capitalize(), "%.2f" % elastic_constants_dict[key]))
+                    if key[0] == "C":
+                        write_line(ec_file, content % (key.capitalize(), elastic_constants_dict[key]))
+                    elif key[0] not in ["D"]:
+                        write_line(ec_file, content %
+                                   (key.capitalize(), "%.2f" % elastic_constants_dict[key]))
 
-                    write_line(ec_file, content %
-                               (key.capitalize(), "%.2f" % elastic_constants_dict[key]))
+                    else:
+                        write_line(ec_file, content % (key.capitalize(), elastic_constants_dict[key]))  
+                        
+        #strain_energy_line = "Strain Energy = {:.4f} eV".format(total_strain_energy)
+        #energy_density_line = "Strain Energy Density = {:.3e} J/m^3".format(total_energy_density)
+        if dimensional == '2D':
+            energy_density_line = "Strain Energy Density = {:.3e} J/m²".format(SEDF_values)
+        else:
+            energy_density_line = "Strain Energy Density = {:.3e} J/m³ ".format(SEDF_values)
 
+ 
+        #write_line(ec_file, strain_energy_line)
+        write_line(ec_file, energy_density_line)
 
         if print_anisotropy:
             write_line(ec_file, longdash)
             write_line(ec_file, "Elastic anisotropy:")
             write_line(ec_file, "A_U = %s" % "%.4f" % A_U)
-            write_line(ec_file, "A_C = %s" % "%.4f" % A_C)
+            if dimensional == '3D':
+                write_line(ec_file, "A_C = %s" % "%.4f" % A_C)
 
+
+        #print("%9.3f %9.3f %9.3f %9.3f %9.3f %9.3f" % tuple(eigenvals))
+
+
+
+        eigen_stable = True
+        if eigenvals[0] <= 0:
+            #print('Eigenvalue matrix is not definite positive, crystal is mechanically unstable<br/>')
+            eigen_stable = False 
+        
         stable = criteria(elastic_constants_dict, latt_system)
-        write_line(ec_file, longdash)
-        write_line(ec_file, "Structure stability analysis...")
+        write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
+        write_line(ec_file, "                 Structural Stability Analysis")
+        write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
 
-        if stable:
+        lambda_headers = " ".join(["   λ_{}".format(i+1) for i in range(len(eigenvals))])
+        total_width_eigenvalues = 6 * len(eigenvals) + (len(eigenvals) - 1) * 1  
+        leading_space_for_eigenvalues = (total_width_eigenvalues - len(lambda_headers)) // 2
+
+
+        leading_space_for_lambda = 10
+        adjusted_leading_space_for_lambda = leading_space_for_lambda + leading_space_for_eigenvalues
+
+        eigen_format = " ".join(["%6.3f" for _ in eigenvals])
+
+        if stable: # and eigen_stable:
+            write_line(ec_file, " " * adjusted_leading_space_for_lambda + lambda_headers)
+            write_line(ec_file, "Eigenvalues: " + eigen_format % tuple(eigenvals))
             write_line(ec_file, "This structure is mechanically STABLE.")
         else:
-            write_line(ec_file, "This structure is NOT mechanically stable.")
+            write_line(ec_file, " " * adjusted_leading_space_for_lambda + lambda_headers)
+            write_line(ec_file, "Eigenvalues: " + eigen_format % tuple(eigenvals))
+            write_line(ec_file, "This structure is NOT mechanically STABLE.")
+            
+
+
+        if print_hardness:
+            if dimensional == '3D':
+                H1a, H1b, H1c,H2, H3, H4, H5, H6, H7, F1, F2, F3 = hardness_values  # Unpacking the results
+                write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
+                write_line(ec_file, "Hardness (H) and Fracture Toughness (F) Analysis")
+                write_line(ec_file, "WARNING: An empirical approximation; check validity!")
+                write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
+                # Printing the hardness values
+                hardness_lines = [
+                   "Hardness (H1a) = {:.2f} GPa;  Ref.[1]".format(H1a),
+                   "Hardness (H1b) = {:.2f} GPa;  Ref.[1]".format(H1b),
+                   "Hardness (H1c) = {:.2f} GPa;  Ref.[2]".format(H1c),
+                   "Hardness (H2)  = {:.2f} GPa;  Ref.[3]".format(H2),
+                   "Hardness (H3)  = {:.2f} GPa;  Ref.[4]".format(H3),
+                   "Hardness (H4)  = {:.2f} GPa;  Ref.[1]".format(H4),
+                   "Hardness (H5)  = {:.2f} GPa;  Ref.[5]".format(H5),
+                   "Hardness (H6)  = {:.2f} GPa;  Ref.[6]".format(H6),
+                   "Hardness (H7)  = {:.2f} GPa;  Ref.[7]".format(H7),
+                   "Fracture Toughness (F1)  = {:.2f} MPa m¹/₂;  Ref.[5]".format(F1*1e3),
+                   "Fracture Toughness (F2)  = {:.2f} MPa m¹/₂;  Ref.[6]".format(F2*1e3),
+                   "Fracture Toughness (F3)  = {:.2f} MPa m¹/₂;  Ref.[6]".format(F3*1e3)
+                ]
+
+                for line in hardness_lines:
+                   write_line(ec_file, line)
+
+                column_widths = {
+                    'Type': max(len("S"), len("I"), len("M")),
+                    'Cubic': max(len("All,F1-2"), len("All,F1-2"), len("H1a,H7,F3")),
+                    'Hexagonal': len("All,F1-2"),
+                    'Orthorhombic': len("H2,H6,H7,F1-2"),
+                    'Rhombohedral': len("All,F1-2"),
+                    'General': len("H2,H6,H7,F1-2")
+                }
+
+                # Format headers
+                header = "{:<{Type}}  {:<{Cubic}}  {:<{Hexagonal}}  {:<{Orthorhombic}}  {:<{Rhombohedral}}  {:<{General}}".format(
+                    "", "Cubic", "Hexagonal", "Orthorhombic", "Rhombohedral", "General", **column_widths)
+                divider = "--" * max_width
+
+                recommendation_model_lines = [
+                divider,
+                header,
+                divider,
+                "{:<{Type}}  {:<{Cubic}}  {:<{Hexagonal}}  {:<{Orthorhombic}}  {:<{Rhombohedral}}  {:<{General}}".format(
+                "I", "All,F1-2", "All,F1-2", "H2,H6,H7,F1-2", "All,F1-2", "H2,H6,H7,F1-2", **column_widths),
+                "{:<{Type}}  {:<{Cubic}}  {:<{Hexagonal}}  {:<{Orthorhombic}}  {:<{Rhombohedral}}  {:<{General}}".format(
+                "S", "All,F1-2", "All,F1-2", "H2,H6,H7,F1-2", "All,F1-2", "H5,H6,H7,F1-2", **column_widths),
+                "{:<{Type}}  {:<{Cubic}}  {:<{Hexagonal}}  {:<{Orthorhombic}}  {:<{Rhombohedral}}  {:<{General}}".format(
+                "M", "H1a,H7,F3", "H4,H7,F3", "H4,H7,F3", "H4,H7,F3", "H4,H7,F3", **column_widths),
+                 divider
+                ]
+
+                for line in recommendation_model_lines:
+                    write_line(ec_file,line)
+
+                gap_lines = [
+                    "Insulator (I)     : bandgap > 2 eV",
+                    "Semiconductor (S) : bandgap < 2 eV",
+                    "Metal (M)         : bandgap = 0"
+                ]
+
+                for line in gap_lines:
+                    write_line(ec_file, line)
+
+                write_line(ec_file, "--" * max_width)
+                write_line(ec_file, "References")
+                write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
+
+                # Adding the references
+                references = [
+                     "[1] Comp. Mater. Sci. 50 (2011)",
+                     "[2] Scientific Reports, 3776 (2022)",
+                     "[3] MRS Bull. 23, 22 (1998)",
+                     "[4] J. Phys.: Condens. Matter 22 315503 (2010)",
+                     "[5] Intermetallics 19, 1275 (2011)",
+                     "[6] J. Appl. Phys. 125, 065105 (2019)",
+                     "[7] J. Appl. Phys. 126, 125109 (2019)"
+                ]
+
+                for ref in references:
+                    write_line(ec_file, ref)
+
+
+            elif dimensional == '2D':
+                H1a, H1b, H1c,H2, H3, H4, H5, H6, H7, F1, F2, F3 = hardness_values 
+                write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
+                write_line(ec_file, "Hardness (H) and Fracture Toughness (F) Analysis")
+                write_line(ec_file, "WARNING: An empirical approximation; check validity!")
+                write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
+                # Printing the hardness values
+                hardness_lines = [
+                   "Hardness (H1a) = {:.2f} N/m;  Ref.[1]".format(H1a),
+                   "Hardness (H1b) = {:.2f} N/m;  Ref.[1]".format(H1b),
+                   "Hardness (H1c) = {:.2f} N/m;  Ref.[2]".format(H1c),
+                   "Hardness (H2)  = {:.2f} N/m;  Ref.[3]".format(H2),
+                   "Hardness (H3)  = {:.2f} N/m;  Ref.[4]".format(H3),
+                   "Hardness (H4)  = {:.2f} N/m;  Ref.[1]".format(H4),
+                   "Hardness (H5)  = {:.2f} N/m;  Ref.[5]".format(H5),
+                   "Hardness (H6)  = {:.2f} N/m;  Ref.[6]".format(H6),
+                   "Hardness (H7)  = {:.2f} N/m;  Ref.[7]".format(H7),
+                   "Fracture Toughness (F1)  = {:.3e} Nm⁻³/₂; Ref.[5]".format(F1),
+                   "Fracture Toughness (F2)  = {:.3e} Nm⁻³/₂;  Ref.[6]".format(F2),
+                   "Fracture Toughness (F3)  = {:.3e} Nm⁻³/₂;  Ref.[6]".format(F3)
+                ]
+
+                for line in hardness_lines:
+                   write_line(ec_file, line)
+
+                column_widths = {
+                    'Type': max(len("S"), len("I"), len("M")),
+                    'Isotropy': max(len("All,F1-2"), len("H5-7,F1-2"), len("H1a,H7,F3")),
+                    'Tetragonal': len("All,F1-2"),
+                    'Orthotropy': len("All,F1-2"),
+                    'Anisotropy': len("X-H2-4,F1-2"),
+                    'General': len("H1a,H1b,H7,F1-2")
+                }
+
+                # Format headers
+                header = "{:<{Type}}  {:<{Isotropy}}  {:<{Tetragonal}}  {:<{Orthotropy}}  {:<{Anisotropy}}  {:<{General}}".format(
+                    "", "Isotropy", "Tetragonal", "Orthotropy", "Anisotropy", "General", **column_widths)
+                divider = "--" * max_width
+
+                recommendation_model_lines = [
+                divider,
+                header,
+                divider,
+                "{:<{Type}}  {:<{Isotropy}}  {:<{Tetragonal}}  {:<{Orthotropy}}  {:<{Anisotropy}}  {:<{General}}".format(
+                "I", "All,F1-2", "All,F1-2", "All,F1-2", "X-H2-4,F1-2", "X-H2-4,F1-2", **column_widths),
+                "{:<{Type}}  {:<{Isotropy}}  {:<{Tetragonal}}  {:<{Orthotropy}}  {:<{Anisotropy}}  {:<{General}}".format(
+                "S", "All,F1-2", "All,F1-2", "All,F1-2", "X-H2-4,F1,F2", "H5-7,F1-2", **column_widths),
+                "{:<{Type}}  {:<{Isotropy}}  {:<{Tetragonal}}  {:<{Orthotropy}}  {:<{Anisotropy}}  {:<{General}}".format(
+                "M", "H1a,H7,F3", "H4,H7,F3", "H1a,H7,F3", "H1a,H7,F3", "X-H2-4,H7,F3", **column_widths),
+                 divider
+                ]
+
+                for line in recommendation_model_lines:
+                    write_line(ec_file,line)
+
+                gap_lines = [
+                    "Insulator (I)     : bandgap > 2 eV",
+                    "Semiconductor (S) : bandgap < 2 eV",
+                    "Metal (M)         : bandgap = 0"
+                ]
+
+                for line in gap_lines:
+                    write_line(ec_file, line)
+
+                write_line(ec_file, "--" * max_width)
+                write_line(ec_file, "References")
+                write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
+
+                # Adding the references
+                references = [
+                     "[1] Comp. Mater. Sci. 50 (2011)",
+                     "[2] Scientific Reports, 3776 (2022)",
+                     "[3] MRS Bull. 23, 22 (1998)",
+                     "[4] J. Phys.: Condens. Matter 22 315503 (2010)",
+                     "[5] Intermetallics 19, 1275 (2011)",
+                     "[6] J. Appl. Phys. 125, 065105 (2019)",
+                     "[7] J. Appl. Phys. 126, 125109 (2019)"
+                ]
+
+                for ref in references:
+                    write_line(ec_file, ref)
+
 
         write_line(ec_file, "")
         write_line(ec_file, "=" * max_width, border_char="+", filler_char="-")
@@ -398,6 +726,7 @@ else:
     print_boxed_message();
     print("Well done! GOOD LUCK!")
     print("")
+
 
 
 

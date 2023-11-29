@@ -1,0 +1,36 @@
+
++================================================+
+|This is a 2D isotropy lattice.                  |
+|------------------------------------------------|
+|Mean Pressure = -0.02 GPa                       |
+|------------------------------------------------|
+|Elastic constants:                              |
+|C11 = 355.09 N/m                                |
+|C12 = 62.87 N/m                                 |
+|------------------------------------------------|
+|Sound velocity:                                 |
+|V_LA = 21.66 Km/s                                |
+|V_LB = 21.66 Km/s                                |
+|V_SA = 13.90 Km/s                                |
+|V_SB = 13.90 Km/s                                |
+|V_MA = 12.66 Km/s                                |
+|V_MB = 12.66 Km/s                                |
+|------------------------------------------------|
+|Debye temperature:                              |
+|T_DA = 2108.50 K                                 |
+|------------------------------------------------|
+|Debye temperature:                              |
+|T_DB = 2108.50 K                                 |
+|Young's modulus (Y_2da) = 343.96 N/m             |
+|Young's modulus (Y_2db) = 343.96 N/m             |
+|Shear modulus (G_a) = 146.11 N/m                  |
+|Shear modulus (G_b) = 146.11 N/m                  |
+|Possion's ratio (v) = 0.18                      |
+|Possion's ratio (v) = 0.18                      |
+|Bulk modulus (B_a) = 208.98 N/m                   |
+|Bulk modulus (B_b) = 208.98 N/m                   |
+|------------------------------------------------|
+|Structure stability analysis...                 |
+|This structure is mechanically STABLE.          |
++================================================+
+

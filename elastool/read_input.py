@@ -17,13 +17,47 @@
 
 from os import getcwd
 import os
-from write_default_input import write_default_input,write_default_elastool_in,print_default_input_message_0,print_default_input_message_1,display_help
+import numpy as np
+import pkg_resources
+from datetime import datetime
 import sys
+from write_default_input import write_default_input,write_default_elastool_in,print_default_input_message_0,print_default_input_message_1,display_help
+from elastool_elate_browser import ElateAutomation
+from material_analysis import MaterialAnalysis
 
+def read_elastic_tensor(file_name):
+    # Reading the elastic tensor from the file
+    elastic_tensor = np.loadtxt(file_name)
+    return elastic_tensor
+    
+def read_rho_dim(file_name):
+    with open(file_name, 'r') as file:
+        # Skip the header line
+        next(file)
+        # Read the data line
+        data_line = next(file).strip()
+
+    # Split the line into components and check if it contains exactly two values
+    parts = data_line.split()
+    if len(parts) != 2:
+        raise ValueError(f"Expected 2 values in the line, but got {len(parts)} values.")
+
+    rho_str, dimensional = parts
+
+    # Convert the numeric data back to a float
+    rho = float(rho_str)
+
+    return rho, dimensional
+
+        
+def process_parameters(input_string):
+    parameters = input_string.strip().split(',')
+    parameters = [param.strip() for param in parameters]
+    return parameters
 
 def read_input():
     cwd = getcwd()
-    main_infile = open('%s/elastool.in'%cwd, 'r')
+    main_infile = open('%s/elastool.in' % cwd, 'r')
     line = main_infile.readline()
     global indict
     indict = {}
@@ -34,27 +68,111 @@ def read_input():
         if llist != ['\n'] and llist != ['']:
             if llist[0][0] != '#':
                 inputlist = [i.strip().split() for i in llist]
-                if inputlist[1] == []:
-                    with open('../log.elastool', 'a') as logfile:
-                        print >>logfile, "Please give the value(s) for: %s" % inputlist[0][0]
-                        
+                
+                # Handle elateparameters differently
+                if inputlist[0][0] == 'elateparameters':
+                    indict['elateparameters'] = process_parameters(llist[1])
+                    #parameters = llist[1].strip().split(',')
+                    #parameters = [param.strip() for param in parameters]
+                    #indict['elateparameters'] = parameters
+                elif inputlist[0][0] == 'plotparameters':
+                    indict['plotparameters'] = process_parameters(llist[1])
                 else:
-                    indict[inputlist[0][0]] = inputlist[1]
+                    if inputlist[1] == []:
+                        with open('../log.elastool', 'a') as logfile:
+                            print >>logfile, "Please give the value(s) for: %s" % inputlist[0][0]
+                    else:
+                        indict[inputlist[0][0]] = inputlist[1]
+                        
     run_mode_flag = (len(sys.argv) > 1 and sys.argv[1] == "-0") or ('run_mode' in indict and int(indict['run_mode'][0]) == 0)
-      
 
-  
-    if 'method_stress_statistics' in indict and run_mode_flag: #if 'method_stress_statistics' in indict and 'run_mode' in indict and int(indict['run_mode'][0]) == 0:
+    if 'method_stress_statistics' in indict and run_mode_flag:
         write_default_input(indict['method_stress_statistics'][0], cwd)
         print_default_input_message_1()
         sys.exit(0)
     return indict
+    
+       
+def print_pp_message(message):
+    # Split the message into lines
+    lines = message.split('\n')
+    
+    # Find the maximum width of the lines
+    max_width = max(len(line) for line in lines)
+    
+    # Print the top of the box
+    print('+' + '-' * (max_width + 2) + '+')
+    
+    # Print each line in the box
+    for line in lines:
+        print('| ' + line.ljust(max_width) + ' |')
+    
+    # Print the bottom of the box
+    print('+' + '-' * (max_width + 2) + '+')
 
-# Check for help flags before reading input
-#help_flags = {'-help', '--help', '-h', '--h'}
-#if set(sys.argv) & help_flags:
-#    print(read_help('help.txt'))
-#    sys.exit(0)
+message = f"Post-processing simulation with \n ElasTool Version {pkg_resources.get_distribution('ElasTool').version} computational toolkit \n for visualizing the elastic parameters of your material. \n Calculation ended at {datetime.now().strftime('%H:%M:%S')} on {datetime.now().strftime('%Y-%m-%d')}"
+
+
+pp = False
+plotly_flag = False  # This will store the state of -T/-F
+
+if len(sys.argv) > 1:
+    first_arg = sys.argv[1].lower()
+    pp = first_arg in ["-pp", "-postprocess"]
+
+    if pp and len(sys.argv) > 2:
+        second_arg = sys.argv[2].lower()
+        if second_arg == "-plotly":
+            plotly_flag = True
+        elif second_arg == "-noplotly":
+            plotly_flag = False
+
+def post_process():
+    rho, dim = read_rho_dim("massdensity_dim.dat")
+    elastic_tensor = read_elastic_tensor("elastic_tensor.dat")
+    print_pp_message(message)
+    
+    if dim == "3D":
+        analysis_instance = MaterialAnalysis(elastic_tensor, rho, plot=True, plotly=False)
+        analysis_instance.plot_linear_compressibility_3D()
+        analysis_instance.plot_orientation_dependent_3D()
+        analysis_instance.plot_contour_polar_3D()
+        analysis_instance.heatmap_3D()
+        analysis_instance.plot_moduli_heatmaps()
+
+                
+    elif dim == "2D":
+        analysis_instance = MaterialAnalysis(elastic_tensor, rho, plot=True, plotly=False)
+        analysis_instance.plot_orientation_dependent_2D()
+        analysis_instance.plot_contour_2D()
+        # analysis_instance.plot_contour_polar_2D()
+        analysis_instance.heatmap_2D()
+    elif dim == "1D":
+        print("1D systems generally do not have robust spatial dependence.")
+    sys.exit(0)
+        
+
+
+
+if pp:
+    post_process()
+
+
+
+
+activate_flag = False               
+
+if len(sys.argv) > 1:
+    first_arg = sys.argv[1].lower()
+    activate_flag = first_arg in ["-elate"] 
+
+    
+
+if activate_flag:         
+    browser = input("Choose a browser; when done press Ctrl+C: (chrome, firefox, edge, safari): ").lower()
+    elate_instance = ElateAutomation(browser_name=browser)
+    elate_instance.run()
+    sys.exit(0)
 
 
 # Check if any argument is a help command
