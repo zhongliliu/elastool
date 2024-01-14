@@ -39,7 +39,7 @@ ElasTool offers a comprehensive range of features for analyzing various material
 - **Hardness Estimation**: Employs various empirical equations to predict Vickers hardness.
 - **Fracture Toughness Analysis**: Evaluates the material's resistance to crack propagation.
 - **Elastic Anisotropy**: Examines directional variations in material properties.
-- **Compliance Matrix Eigenvalues**: Investigates the material's mechanical response characteristics.
+- **Compliance Matrix Eigenvalues**: Used to investigate the material's mechanical response characteristics.
 
 These features establish ElasTool as a versatile and indispensable toolkit for scientists and engineers specializing in materials science and engineering. Its comprehensive computational capabilities are ideal for advanced material science research, providing critical insights into the mechanical and thermal properties of various materials. Whether for academic research, industrial applications, or innovative material design, ElasTool serves as a pivotal resource in exploring and understanding the intricate behavior of 3D structures, 2D materials, and nanoscale systems.
 
@@ -125,7 +125,7 @@ ElasTool offers straightforward installation options suitable for various user p
 2. **From Source Code**:
    - Alternatively, download the source code with:
      ```
-     git clone [git@github.com:zhongliliu/elastool.git]
+     git clone [git@github.com:gmp007/elastool.git] or git clone [git@github.com:zhongliliu/elastool.git] 
      ```
    - Then, install ElasTool by navigating to the master directory and running:
      ```
