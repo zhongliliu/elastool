@@ -87,7 +87,7 @@ KPAR = 8
         kpoints_content_d = """KPOINT-values
 0
 Gamma
-   5   5   1
+ 4   4   1
 0.0  0.0  0.0
 """
         # Write KPOINTS content to a file

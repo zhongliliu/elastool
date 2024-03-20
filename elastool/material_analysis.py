@@ -773,7 +773,6 @@ class MaterialAnalysis:
         moduli = np.array([self.compute_moduli_directional_3D(np.linalg.inv(cp)) for cp in C_prime])
 
 
-#moduli = np.array([self.compute_moduli_directional_3D(np.linalg.inv(cp)) for cp in C_prime])
 
         try:
             # Visualization
@@ -1017,31 +1016,11 @@ class MaterialAnalysis:
         radius = np.array([0, 1])
 
         # Calculate the transformed stiffness matrix and moduli
-        C_prime = np.array([self.transform_stiffness_2D(t) for t in theta_values])
+        C_prime = np.array([self.transform_stiffness_2D(t) for t in np.ravel(theta_values)])
+        
+        moduli = np.array([self.compute_moduli_directional_2D(np.linalg.pinv(cp)) for cp in C_prime])
 
-        moduli = []
-        for cp in C_prime:
-            # Check determinant
-            det = np.linalg.det(cp)
-            if np.abs(det) < 1e-10:
-                print(f"Warning: Matrix is close to singular with determinant {det}")
 
-            # Check condition number
-            cond_num = np.linalg.cond(cp)
-            if cond_num > 1e12:  # Adjust the threshold based on your context
-                print(f"Warning: Matrix is ill-conditioned with condition number {cond_num}")
-            
-            alpha = 1e-5
-            cp += alpha * np.eye(cp.shape[0])
-
-            # Safe inversion using pseudo-inverse
-            Sij = np.linalg.pinv(cp)
-
-            # Compute the moduli for this orientation
-            mod_values = self.compute_moduli_directional_2D(Sij)
-            moduli.append(mod_values)
-
-        moduli = np.array(moduli)
 
 
         # Visualization
@@ -1430,6 +1409,7 @@ class MaterialAnalysis:
         v23 = v2 * v3
         v33 = v3 * v3
         S = self.Cs
+
         # Calculate a11 and a12 using the compliance matrix S and the v values
         a11 = S[0, 0] * v11 + S[1, 1] * v22 + S[2, 2] * v33 + 2 * (S[0, 1] * v12 + S[0, 2] * v13 + S[1, 2] * v23)
         a12 = S[0, 0] * v11 * v1_dir + (S[0, 1] * v22 + S[1, 0] * v11) * v2_dir + (S[0, 2] * v33 + S[2, 0] * v11) * v3_dir + \
@@ -1442,13 +1422,14 @@ class MaterialAnalysis:
               S[5, 5] * v12)
 
         ratio = -a12 / a11
-
+  
         return ratio    
 
 
     def calc_poisson_directional_2D(self, direction, khi, theta):
         # Normalize the direction vector
         S = self.Cs
+        
         v1_dir, v2_dir = direction / np.linalg.norm(direction)
 
         # Calculate the v vectors based on the given khi and theta for 2D

@@ -17,7 +17,7 @@
 
 import numpy as np
 from copy import deepcopy
-from ase.io import vasp
+from ase.io import vasp, write
 from read_input import indict
 from vasp_run import vasp_run
 from extract_mean_values import mean_stress
@@ -41,9 +41,11 @@ def calc_stress(pos_optimized, cell_strain, method_stress_statistics, stress_set
         tag = 'Total+kin.'
         kpoints_file_name = 'KPOINTS-dynamic'
         #vasp.write_vasp('POSCAR', pos_supercell, vasp5=True, direct=True)
-        vasp.write_vasp('POSCAR', pos_strain, vasp5=True, sort=True, direct=True)
+        #vasp.write_vasp('POSCAR', pos_strain, vasp5=True, sort=True, direct=True)
+        write('POSCAR', pos_strain, format='vasp', direct=True)
     else:
-        vasp.write_vasp('POSCAR', pos_strain, vasp5=True, sort=True, direct=True)
+        #vasp.write_vasp('POSCAR', pos_strain, vasp5=True, sort=True, direct=True)
+        write('POSCAR', pos_strain, format='vasp', direct=True)
         step ='fixed-volume-opt'
         tag = 'in kB'
         kpoints_file_name = 'KPOINTS-static'

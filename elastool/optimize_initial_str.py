@@ -17,21 +17,66 @@
 
 from os import mkdir, chdir
 from os.path import isdir
-from ase.io import vasp
+from ase.io import vasp,write
 from vasp_run import vasp_run
 from read_input import indict
+import os
+import shutil
 
 
-def optimize_initial_str(pos_conv, cwd, tag):
-    if not isdir('OPT'):
-        mkdir('OPT')
-    chdir('OPT')
+#def optimize_initial_str(pos_conv, cwd, tag):
+#    if not isdir('OPT'):
+#        mkdir('OPT')
+#    chdir('OPT')
 
-    vasp.write_vasp('POSCAR', pos_conv, vasp5=True, direct=True)
-    kpoints_file_name = 'KPOINTS-static'
-    pos_optimized = vasp_run(tag, kpoints_file_name, cwd)
+#    #vasp.write_vasp('POSCAR', pos_conv, vasp5=True, direct=True)
+#    write('POSCAR', pos_conv, format='vasp', direct=True)
+#    kpoints_file_name = 'KPOINTS-static'
+#    pos_optimized = vasp_run(tag, kpoints_file_name, cwd)
 
-    chdir('..')
+#    chdir('..')
 
-    return pos_optimized
+#    return pos_optimized
     
+    
+    
+
+def optimize_initial_str(pos_conv, cwd, tag, fresh=False, max_retries=3):
+#    if not os.path.isdir('OPT'):
+#        os.mkdir('OPT')
+#    os.chdir('OPT')
+
+    opt_dir = os.path.join(cwd, 'OPT')
+    
+    if fresh:
+        if os.path.isdir(opt_dir):
+            shutil.rmtree(opt_dir)
+        os.mkdir(opt_dir)
+    else:
+        if not os.path.isdir(opt_dir):
+            os.mkdir(opt_dir)
+
+    os.chdir(opt_dir)
+    
+    attempt = 0
+    while attempt < max_retries:
+        try:
+            write('POSCAR', pos_conv, format='vasp', direct=True)
+            kpoints_file_name = 'KPOINTS-static'
+            pos_optimized = vasp_run(tag, kpoints_file_name, cwd)
+            break  
+
+        except Exception as e:
+            attempt += 1
+            print(f"An error occurred on attempt {attempt}: {e}")
+            if attempt < max_retries and os.path.exists('CONTCAR') and os.path.getsize('CONTCAR') > 0:
+                print("Attempting to restart from CONTCAR...")
+                shutil.copy('CONTCAR', 'POSCAR')
+            #else:
+            #    print("Maximum retries reached or CONTCAR file not found/empty.")
+            #    raise
+        finally:
+            os.chdir('..')
+
+    return pos_optimized #if attempt < max_retries else None
+

@@ -2,16 +2,18 @@
 import sys
 import os
 import numpy as np
+import math
 from datetime import datetime
 from os import getcwd, mkdir, chdir
 from os.path import isdir, isfile
+from ase.io import read
 from find_spg import find_crystal_system
 from calc_elastic_constants import calc_elastic_constants
 from deform_cell_ohess_strains import deform_cell_ohess_strains
 from deform_cell_asess_strains import deform_cell_asess_strains
 from deform_cell_ulics import deform_cell_ulics
 from make_conv_cell import make_conventional_cell
-from read_input import indict
+from read_input import indict,post_process
 from relax_atoms_pos import relax_atoms_pos
 from calc_stress import calc_stress, calculate_total_energy_density
 from optimize_initial_str import optimize_initial_str
@@ -20,105 +22,140 @@ from ase.io import vasp
 from equilibrium_md import equil_md
 from stability_criteria import criteria
 from sound_velocity import sound_velocity
-from importlib.metadata import version
+from plot_christoffel_gnu import write_gnuplot_scripts, run_gnuplot_scripts
+from read_flags import get_gnuplot_scripts_path, print_boxed_message, write_line, print_banner, write_run_christoffel_script
+from elastool_elate_browser import ElateAutomation
+#from predict_thickness_2D import predict_thickness_2D
+
+import pkg_resources
+
+
 
 import warnings
 warnings.filterwarnings('ignore')
 
-version = version("ElasTool") #pkg_resources.get_distribution("ElasTool").version
-#---------------------------------------------------------
-#Print out citation
-def print_boxed_message(ec_file=None):
-    header_footer = "+" + "-" * 78 + "+"
-    spacer = "| " + " " * 76 + " |"
-
-    # List of lines to be printed
-    lines = [
-        (" * CITATIONS *", True),
-        ("If you have used Elastool in your research, PLEASE cite:", False),
-        ("", False),  # Space after the above line
-        ("ElasTool: An automated toolkit for elastic constants calculation, ", False),
-        ("Z.-L. Liu, C.E. Ekuma, W.-Q. Li, J.-Q. Yang, and X.-J. Li, ", False),
-        ("Computer Physics Communications 270, 108180, (2022)", False),
-        ("", False),
-
-        ("", False),  # Blank line for separation
-        ("Efficient prediction of temperature-dependent elastic and", False),
-        ("mechanical properties of 2D materials, S.M. Kastuar, C.E. Ekuma, Z-L. Liu,", False),
-        ("Nature Scientific Report 12, 3776 (2022)", False)
-    ]
-
-    def output_line(line):
-        if ec_file:
-            ec_file.write(line + "\n")
-        else:
-            print(line)
-
-    output_line(header_footer)
-    
-    for line, underline in lines:
-        centered_line = line.center(76)
-        output_line("| " + centered_line + " |")
-        
-        if underline:
-            underline_str = "-" * len(centered_line)
-            output_line("| " + underline_str.center(76) + " |")
-
-    # Print footer of the box
-    output_line(header_footer)
+try:
+    from importlib.metadata import version  # Python 3.8+
+    version = version("ElasTool")
+except ImportError:
+    from importlib_metadata import version  # Python <3.8
+    version = version("ElasTool")
+except ImportError:
+    import pkg_resources
+    version = pkg_resources.get_distribution("ElasTool").version
 
 
-
-def write_line(ec_file, content, padding=1, border_char="|", filler_char=" "):
-    content_width = int(max_width) - (2 * int(padding)) - 2  # Subtract 2 for the border characters
-    content = content[:content_width]  # Ensure content doesn't exceed the width
-    line = border_char + filler_char*padding + content.ljust(content_width) + filler_char*padding + border_char
-    ec_file.write(line + "\n")
+include_gnuplot_scripts = True
 
 
-
-
-
-def print_banner(ec_file, version):
-    # Get current date and time
-    current_time = datetime.now().strftime('%H:%M:%S')
-    current_date = datetime.now().strftime('%Y-%m-%d')
-    conclusion_msg = f"Calculations ended at {current_time} on {current_date}"
-
-    # Concatenate the message with the version info
-    message = f"SUMMARY OF RESULTS\nusing\nElasTool Version: {version}\n{conclusion_msg}"
-
-    # Now use the write_line function
-    write_line(ec_file, '❤' * (max_width - 2), padding=0, border_char='❤', filler_char='❤')  # This will print a line of hearts
-    for line in message.split('\n'):
-        centered_line = line.center(max_width - 4)  # Subtract 4 for the two border characters and spaces at each end
-        write_line(ec_file, centered_line, padding=1, border_char='❤')
-    write_line(ec_file, '❤' * (max_width - 2), padding=0, border_char='❤', filler_char='❤')  # This will print another line of hearts
-
-#---------------------------------------------------------
-
-
-
+total_time_start = datetime.now()
+print_banner(version,"started",ec_file=None)
 #--------------------------------------------------
-# Main code starts
+# Read in inputs
 #--------------------------------------------------
 mean_press = 0
 stress_set_dict = {}
-method_stress_statistics = indict['method_stress_statistics'][0]
-num_last_samples = int(indict['num_last_samples'][0])
-run_mode = int(indict['run_mode'][0])
-dimensional = indict['dimensional'][0]
+cwd = getcwd()
+try:
+    method_stress_statistics = indict.get('method_stress_statistics', ['static'])[0]
+    num_last_samples = int(indict.get('num_last_samples', [500])[0])
+    run_mode = int(indict.get('run_mode', [1])[0])
+    dimensional = indict.get('dimensional', ['2D'])[0]
 
+    structure_file = indict['structure_file'][0]
+    pos_conv, _ = make_conventional_cell(structure_file)
+
+    # Added code
+    tubestrain_type = "Nanotube"  # For potential extension to other forms of strain in 1D
+
+    plotparameters = indict.get('plotparameters', ['no', 'no'])
+    for index, param in enumerate(plotparameters):
+        if param.lower() == 'yes':
+            plotparameters[index] = True
+        elif param.lower() == 'no':
+            plotparameters[index] = False
+        else:
+            print(f"Warning: Invalid value for 'plotparameters' at position {index}: {param}. Using default value (no).")
+            plotparameters[index] = False
+
+    elateparameters = [param.upper() for param in indict.get('elateparameters', ['None'])]
+
+    # Check if CONTCAR exists in the OPT folder and if so, use it instead of the unoptimized pos_conv
+    pos_pp = pos_conv
+    contcar_path = os.path.join(cwd, 'OPT', 'CONTCAR')
+    if os.path.isfile(contcar_path):
+         pos_pp = read(contcar_path) 
+
+    latt_system = find_crystal_system(pos_pp, dimensional, tubestrain_type, plotparameters[1])
+except Exception as e:
+    print(f"An error occurred: {e}")
+    pass
+
+
+#predict_thickness_2D(pos_pp,os.getcwd())    
+    
+if os.path.isfile(structure_file):
+    _, nanoribbon = make_conventional_cell(structure_file)
 
 if method_stress_statistics == 'static':
     num_last_samples = 1
 
-cwd = getcwd()
-structure_file = indict['structure_file'][0]
+
+#--------------------------------------------------
+# Post-processing stuffs
+#--------------------------------------------------
+
+pp = False
+plotly_flag = False  # Default state of plotly_flag
+
+if len(sys.argv) > 1:
+    first_arg = sys.argv[1].lower()
+    pp = first_arg in ["-pp", "-postprocess"]
+
+for arg in sys.argv[1:]:  
+    if arg.lower() == "-plotly":
+        plotly_flag = True
+        break 
+    elif arg.lower() == "-noplotly":
+        plotly_flag = False
+        break 
+        
+            
+if plotly_flag: # and not plotparameters[1]:
+    plotparameters[1] = True
+    
+                
+if pp:
+    post_process(latt_system,plotly_flag)
+
+
+activate_flag = False               
+
+if len(sys.argv) > 1:
+    first_arg = sys.argv[1].lower()
+    activate_flag = first_arg in ["-elate"] 
+
+    
+
+if activate_flag:         
+    browser = input("Choose a browser; when done press Ctrl+C: (chrome, firefox, edge, safari): ").lower()
+    elate_instance = ElateAutomation(browser_name=browser)
+    elate_instance.run()
+    sys.exit(0)
+
+
+
+
+
+  
+
+#--------------------------------------------------
+# Main code starts here
+#--------------------------------------------------
 
 # optimize the initial structure at fixed pressure/volume
 if run_mode == 1 and not os.path.isfile('%s/OPT/CONTCAR'%cwd):
-    pos_conv = make_conventional_cell(structure_file)
+    #pos_conv,_ = make_conventional_cell(structure_file)
     pos_optimized = optimize_initial_str(pos_conv, cwd, 'fixed-pressure-opt')
 else:
     outcar_path = os.path.join(cwd, 'OPT', 'OUTCAR')
@@ -128,73 +165,56 @@ else:
             content = file.read()
             
         if "reached required accuracy" not in content:
+
+            #pos_conv,_ = make_conventional_cell(structure_file)
+            pos_optimized = optimize_initial_str(pos_conv, cwd, 'fixed-pressure-opt',fresh=True)
+    
             framed_message = [
                 "***********************************************",
                 "* No optimized structure found in the OPT     *",
-                "* directory. Please remove directory and     *",
-                "* rerun the step to obtain optimized          *",
-                "* structure. If using automatic approach, set *",
-                "* run_mode = 1                                *",
+                "*         directory. Continuing with          *",
+                "* with structural optimization                *",
                 "***********************************************"
             ]
             for line in framed_message:
                 print(line)
-            pass
-            sys.exit() 
+            #pass
+            #sys.exit() 
     elif 'pos_conv' in locals() and 'pos_optimized' in locals() and set(pos_conv.get_chemical_symbols()) != set(pos_optimized.get_chemical_symbols()):#set(pos_conv.get_chemical_symbols()) != set(pos_optimized.get_chemical_symbols()):
+
+        #pos_conv,_ = make_conventional_cell(structure_file)
+        pos_optimized = optimize_initial_str(pos_conv, cwd, 'fixed-pressure-opt',fresh=True)
         framed_message = [
             "***********************************************",
-            "* Structures in CONTCAR and initial atom      *",
-            "* objects do not match remove the OPT dir     *",
-            "* and rerun the step to obtain optimized       *",
-            "* structure. If using automatic approach, set *",
-            "* run_mode = 1                                *",
+            "* Structures in CONTCAR and initial atom        *",
+            "* objects do not match, the OPT dir             *",
+            "* will be to removed to enable fresh            *",
+            "* structural optimization. If not what you want *",
+            "* restart completely with run_mode = 1          *",
             "***********************************************"
         ]
         for line in framed_message:
             print(line)
-        pass
-        sys.exit() 
+        #pass
+        #sys.exit() 
+
     else:
-        print("CONTCAR file not found in the OPT directory. Structure not yet optimized")
-        sys.exit() 
+        print(f"CONTCAR file not found in the OPT directory. Structure not yet optimized; \nContinuing with structural optimization")
+        #sys.exit() 
+        #pos_conv,_ = make_conventional_cell(structure_file)
+        pos_optimized = optimize_initial_str(pos_conv, cwd, 'fixed-pressure-opt',fresh=True)
+    
+    if os.path.isfile('%s/OPT/CONTCAR'%cwd) and set(pos_conv.get_chemical_symbols()) != set(vasp.read_vasp('%s/OPT/CONTCAR'%cwd).get_chemical_symbols()):
+        print(f"Original and optimized structure do not match; Restarting optimization!!!")
+        pos_optimized = optimize_initial_str(pos_conv, cwd, 'fixed-pressure-opt',fresh=True)
     
     pos_optimized = vasp.read_vasp('%s/OPT/CONTCAR'%cwd)
-
-
-tubestrain_type = "Nanotube" #indict['tubestrain_type'][0] #For potential extension to other forms of strain in 1D
-
-plotparameters = indict.get('plotparameters', [])
-
-for index, param in enumerate(plotparameters):
-    if param.lower() == 'yes':
-        plotparameters[index] = True
-    elif param.lower() == 'no':
-        plotparameters[index] = False
-    else:
-        print(f"Warning: Invalid value for 'plotparameters' at position {index}: {param}. Using default value (no).")
-        plotparameters[index] = False
-
-
-
-#elateparameters = indict['elateparameters'][0]
-#elateparameters = indict.get('elateparameters', [])
-elateparameters = [param.upper() for param in indict.get('elateparameters', [])]
-
+    print("Optimization Done!")
 
 
 latt_system = find_crystal_system(pos_optimized, dimensional,tubestrain_type,plotparameters)
-
-
-
-if dimensional == '1D':
-    if latt_system == 'Nanotube':
-         tubestrain_type = 'Nanotube'
-    else:
-        print('Choose a type of strain for the 1D system!!!')
-        sys.exit(1)
-  
-
+   
+   
 if method_stress_statistics == 'dynamic':
     equil_md(pos_optimized, cwd)
     tag = 'Total+kin.'
@@ -212,8 +232,17 @@ if method_stress_statistics == 'dynamic':
     cell_new = pos_opt.get_cell() * vol_scale
     pos_opt.set_cell(cell_new, scale_atoms=True)
 
+
+    repeat_nums = indict.get('repeat_num', "1 1 1")
+
+
+    if isinstance(repeat_nums, str):
+        repeat = [int(num) for num in repeat_nums.split()]
+    else:
+        repeat = [int(num) for num in repeat_nums]
+        
+    #repeat = [int(num) for num in repeat_nums.split()] 
     pos_optimized_v = optimize_initial_str(pos_opt, cwd, 'fixed-volume-opt')
-    repeat = [int(indict['repeat_num'][0]),int(indict['repeat_num'][1]),int(indict['repeat_num'][2])]
     pos_optimized = pos_optimized_v.repeat(repeat)
 
 
@@ -230,7 +259,7 @@ if method_stress_statistics == 'dynamic':
     #delta_list = [float(indict['strains_list'][0])]
     strains_matrix = 'ohess'
 else:
-    strains_matrix = indict['strains_matrix'][0]
+    strains_matrix = indict.get('strains_matrix',['ohess'])[0]
 
 time_start = datetime.now()
 
@@ -291,6 +320,14 @@ max_width = len("|WARNING: This is an empirical approx; validity needs to be che
 
 
 
+
+#script_dir = 'plot_christoffel'
+#result_dir = 'christoffel_results'
+#run_gnuplot_scripts(script_dir, result_dir)
+
+
+    
+    
 if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
     print("")
     print("Fitting the first-order function to the collected \nstress-strain data according to Hooke's law...")
@@ -307,12 +344,16 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
 
     with open('elastool.out', 'w') as ec_file:
         #write_line(ec_file, "")
-        print_banner(ec_file,version)
+        print_banner(version,"ended",ec_file=ec_file)
         write_line(ec_file, "=" * max_width, border_char="+", filler_char="-")
 
         if dimensional == '1D':
             description = "            This is a %2s %s" % (
                 indict['dimensional'][0],   tubestrain_type + ' lattice.')
+        elif dimensional == "3D" and nanoribbon:
+            description = "            This is a %s%s lattice." % (
+                 tubestrain_type, '')
+
         else:
             description = "            This is a %2s %s" % (
                 indict['dimensional'][0], latt_system + ' lattice.')
@@ -345,16 +386,21 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
                 G_R = 2./(S11 + S22 - 2*S12 + S66)
                 G_V = (C11 + C22 -2*C12 +4 *C66)/8. 
                 A_U = 2 * G_V / G_R + B_V / B_R - 3
+                A_L = np.sqrt(math.log(B_V/B_R)**2 + 5.0*math.log(G_V/G_R)**2   )
                 print_anisotropy = True
                 print_hardness = True
             elif dimensional == '3D':
+                if not nanoribbon:
+                    print_anisotropy = True
+                   
                 G_V = elastic_constants_dict['G_v']
                 G_R = elastic_constants_dict['G_r']
                 B_V = elastic_constants_dict['B_v']
                 B_R = elastic_constants_dict['B_r']
                 A_U = 5 * G_V / G_R + B_V / B_R - 6
                 A_C = (G_V - G_R) / (G_V + G_R)
-                print_anisotropy = True
+                A_L = np.sqrt(math.log(B_V/B_R)**2 + 5.0*math.log(G_V/G_R)**2   )
+                
                 print_hardness = True
             #else:
             #    print("Invalid dimensionality specified.")
@@ -380,16 +426,22 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
                     'G': "%s = %s GPa",
                     'E': "Young's modulus (%s) = %s GPa",
                     'v': "Poisson's ratio (%s) = %s",
+                    'S': "Grüneisen parameter (%s) = %s", 
                     'V': "Sound velocity (%s) = %s Km/s",
                     'P': "Pugh's modulus ratio (%s) = %s",
                     'M': "Lame's parameter (%s) = %s N/m",
                     'Q': "Kleinman’s parameter (%s) = %s",
                     'T': "Debye temperature (%s) = %s K",
-                    'K': "Min thermal conductivity (%s) = %s W/(mK)",
+                    'K': "Min thermal conductivity (%s) = %s W/(m.K)",
+                    'k': "Thermal conductivity @ 300 K (%s) = %s W/(m.K)",
+                    'h': "Heat capacity @ 300 K (%s) = %s J/(mol⋅K)",
+                    's': "Entropy @ 300 K (%s) = %s J/(mol⋅K)",
+                    'p': "Mean-free path @ 300 K (%s) = %s µm",
                     'C': "Linear compressibility (%s) = %.2e TPa^-1", 
+                    'R': "Resonance frequency (%s) = %s GHz", 
                     'D': "Ductility test (%s) = %s" 
  
-                }
+                } 
 
                 content = content_mapping.get(key[0], None)
                 if content:
@@ -405,8 +457,10 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
                 #print_hardness = False
                 content_mapping = {
                     'c': "%s = %s N/m",
+                    't': "Predicted thickness (%s) = %s Å",
                     'Y': "Young's modulus (%s) = %s N/m",
                     'v': "Poisson's ratio (%s) = %s",
+                    'S': "Grüneisen parameter (%s) = %s", 
                     'B': "Stiffness constant (%s) = %s N/m",
                     'G': "Shear modulus (%s) = %s N/m",
                     'V': "Sound velocity (%s) = %s Km/s",
@@ -416,8 +470,13 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
                     'M': "Lame's parameter (%s) = %s N/m",
                     'Q': "Kleinman’s parameter (%s) = %s",
                     'R': "Resonance frequency (%s) = %s GHz",
-                    'K': "Min thermal conductivity (%s) = %s W/(mK)",
+                    'K': "Min thermal conductivity (%s) = %s W/(m.K)",
+                    'k': "Thermal conductivity @ 300 K (%s) = %s W/(m.K)",
+                    'h': "Heat capacity @ 300 K (%s) = %s J/(mol⋅K)",
+                    's': "Entropy @ 300 K (%s) = %s J/(mol⋅K)",
+                    'p': "Mean-free path @ 300 K (%s) = %s µm",
                     'C': "Linear compressibility (%s) = %.2e m/N", 
+                    'R': "Resonance frequency (%s) = %s GHz", 
                     'D': "Ductility test (%s) = %s" 
                 }
 
@@ -443,11 +502,11 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
                     'v': "Poisson's ratio (%s) = %s",
                     'B': "Bulk modulus (%s) = %s GPa",
                     'G': "Shear modulus (%s) = %s GPa",
-                    'Rf': "Resonance frequency (%s) = %s GHz",
+                    'R': "Resonance frequency (%s) = %s GHz",
                     'V': "Sound velocity (%s) = %s Km/s",
                     'P': "Pugh's modulus ratio (%s) = %s",
                     'T': "Debye temperature (%s) = %s K",
-                    'K': "Min thermal conductivity (%s) = %s W/(mK)",
+                    'K': "Min thermal conductivity (%s) = %s W/(m.K)",
                     'C': "Linear compressibility (%s) = %.2e TPa^-1", 
                     'D': "Ductility test (%s) = %s" 
                 }
@@ -474,12 +533,15 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
         #write_line(ec_file, strain_energy_line)
         write_line(ec_file, energy_density_line)
 
-        if print_anisotropy:
-            write_line(ec_file, longdash)
-            write_line(ec_file, "Elastic anisotropy:")
-            write_line(ec_file, "A_U = %s" % "%.4f" % A_U)
-            if dimensional == '3D':
-                write_line(ec_file, "A_C = %s" % "%.4f" % A_C)
+        if not nanoribbon:
+            if print_anisotropy:
+                write_line(ec_file, longdash)
+                write_line(ec_file, "Elastic anisotropy:")
+
+                write_line(ec_file, "A_U = %s" % "%.4f" % A_U)
+                write_line(ec_file, "A_L = %s" % "%.4f" % A_L)
+                if dimensional == '3D':
+                    write_line(ec_file, "A_C = %s" % "%.4f" % A_C)
 
 
         #print("%9.3f %9.3f %9.3f %9.3f %9.3f %9.3f" % tuple(eigenvals))
@@ -487,11 +549,16 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
 
 
         eigen_stable = True
+        stable = False
         if eigenvals[0] <= 0:
             #print('Eigenvalue matrix is not definite positive, crystal is mechanically unstable<br/>')
             eigen_stable = False 
         
-        stable = criteria(elastic_constants_dict, latt_system)
+        if nanoribbon:
+            if any(x > 0 for x in [elastic_tensor[0,0], elastic_tensor[1,1], elastic_tensor[2,2]]):
+                stable = True
+        else:
+            stable = criteria(elastic_constants_dict, latt_system)
         write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
         write_line(ec_file, "                 Structural Stability Analysis")
         write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
@@ -507,183 +574,188 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
         eigen_format = " ".join(["%6.3f" for _ in eigenvals])
 
         if stable: # and eigen_stable:
-            write_line(ec_file, " " * adjusted_leading_space_for_lambda + lambda_headers)
-            write_line(ec_file, "Eigenvalues: " + eigen_format % tuple(eigenvals))
+            if not nanoribbon:
+                write_line(ec_file, " " * adjusted_leading_space_for_lambda + lambda_headers)
+                write_line(ec_file, "Eigenvalues: " + eigen_format % tuple(eigenvals))
             write_line(ec_file, "This structure is mechanically STABLE.")
         else:
             write_line(ec_file, " " * adjusted_leading_space_for_lambda + lambda_headers)
             write_line(ec_file, "Eigenvalues: " + eigen_format % tuple(eigenvals))
-            write_line(ec_file, "This structure is NOT mechanically STABLE.")
+            if not nanoribbon:
+                write_line(ec_file, "This structure is NOT mechanically STABLE.")
             
 
 
         if print_hardness:
-            if dimensional == '3D':
-                H1a, H1b, H1c,H2, H3, H4, H5, H6, H7, F1, F2, F3 = hardness_values  # Unpacking the results
-                write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
-                write_line(ec_file, "Hardness (H) and Fracture Toughness (F) Analysis")
-                write_line(ec_file, "WARNING: An empirical approximation; check validity!")
-                write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
-                # Printing the hardness values
-                hardness_lines = [
-                   "Hardness (H1a) = {:.2f} GPa;  Ref.[1]".format(H1a),
-                   "Hardness (H1b) = {:.2f} GPa;  Ref.[1]".format(H1b),
-                   "Hardness (H1c) = {:.2f} GPa;  Ref.[2]".format(H1c),
-                   "Hardness (H2)  = {:.2f} GPa;  Ref.[3]".format(H2),
-                   "Hardness (H3)  = {:.2f} GPa;  Ref.[4]".format(H3),
-                   "Hardness (H4)  = {:.2f} GPa;  Ref.[1]".format(H4),
-                   "Hardness (H5)  = {:.2f} GPa;  Ref.[5]".format(H5),
-                   "Hardness (H6)  = {:.2f} GPa;  Ref.[6]".format(H6),
-                   "Hardness (H7)  = {:.2f} GPa;  Ref.[7]".format(H7),
-                   "Fracture Toughness (F1)  = {:.2f} MPa m¹/₂;  Ref.[5]".format(F1*1e3),
-                   "Fracture Toughness (F2)  = {:.2f} MPa m¹/₂;  Ref.[6]".format(F2*1e3),
-                   "Fracture Toughness (F3)  = {:.2f} MPa m¹/₂;  Ref.[6]".format(F3*1e3)
-                ]
+            try:
+                if dimensional == '3D':
+                    H1a, H1b, H1c,H2, H3, H4, H5, H6, H7, F1, F2, F3 = hardness_values  # Unpacking the results
+                    write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
+                    write_line(ec_file, "Hardness (H) and Fracture Toughness (F) Analysis")
+                    write_line(ec_file, "WARNING: An empirical approximation; check validity!")
+                    write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
+                    # Printing the hardness values
+                    hardness_lines = [
+                      "Hardness (H1a) = {:.2f} GPa;  Ref.[1]".format(H1a),
+                      "Hardness (H1b) = {:.2f} GPa;  Ref.[1]".format(H1b),
+                      "Hardness (H1c) = {:.2f} GPa;  Ref.[2]".format(H1c),
+                      "Hardness (H2)  = {:.2f} GPa;  Ref.[3]".format(H2),
+                      "Hardness (H3)  = {:.2f} GPa;  Ref.[4]".format(H3),
+                      "Hardness (H4)  = {:.2f} GPa;  Ref.[1]".format(H4),
+                      "Hardness (H5)  = {:.2f} GPa;  Ref.[5]".format(H5),
+                      "Hardness (H6)  = {:.2f} GPa;  Ref.[6]".format(H6),
+                      "Hardness (H7)  = {:.2f} GPa;  Ref.[7]".format(H7),
+                      "Fracture Toughness (F1)  = {:.2f} MPa m¹/₂;  Ref.[5]".format(F1*1e3),
+                      "Fracture Toughness (F2)  = {:.2f} MPa m¹/₂;  Ref.[6]".format(F2*1e3),
+                      "Fracture Toughness (F3)  = {:.2f} MPa m¹/₂;  Ref.[6]".format(F3*1e3)
+                    ]
 
-                for line in hardness_lines:
-                   write_line(ec_file, line)
+                    for line in hardness_lines:
+                      write_line(ec_file, line)
 
-                column_widths = {
-                    'Type': max(len("S"), len("I"), len("M")),
-                    'Cubic': max(len("All,F1-2"), len("All,F1-2"), len("H1a,H7,F3")),
-                    'Hexagonal': len("All,F1-2"),
-                    'Orthorhombic': len("H2,H6,H7,F1-2"),
-                    'Rhombohedral': len("All,F1-2"),
-                    'General': len("H2,H6,H7,F1-2")
-                }
+                    column_widths = {
+                        'Type': max(len("S"), len("I"), len("M")),
+                        'Cubic': max(len("All,F1-2"), len("All,F1-2"), len("H1a,H7,F3")),
+                        'Hexagonal': len("All,F1-2"),
+                        'Orthorhombic': len("H2,H6,H7,F1-2"),
+                        'Rhombohedral': len("All,F1-2"),
+                        'General': len("H2,H6,H7,F1-2")
+                    }
 
-                # Format headers
-                header = "{:<{Type}}  {:<{Cubic}}  {:<{Hexagonal}}  {:<{Orthorhombic}}  {:<{Rhombohedral}}  {:<{General}}".format(
-                    "", "Cubic", "Hexagonal", "Orthorhombic", "Rhombohedral", "General", **column_widths)
-                divider = "--" * max_width
+                    # Format headers
+                    header = "{:<{Type}}  {:<{Cubic}}  {:<{Hexagonal}}  {:<{Orthorhombic}}  {:<{Rhombohedral}}  {:<{General}}".format(
+                        "", "Cubic", "Hexagonal", "Orthorhombic", "Rhombohedral", "General", **column_widths)
+                    divider = "--" * max_width
 
-                recommendation_model_lines = [
-                divider,
-                header,
-                divider,
-                "{:<{Type}}  {:<{Cubic}}  {:<{Hexagonal}}  {:<{Orthorhombic}}  {:<{Rhombohedral}}  {:<{General}}".format(
-                "I", "All,F1-2", "All,F1-2", "H2,H6,H7,F1-2", "All,F1-2", "H2,H6,H7,F1-2", **column_widths),
-                "{:<{Type}}  {:<{Cubic}}  {:<{Hexagonal}}  {:<{Orthorhombic}}  {:<{Rhombohedral}}  {:<{General}}".format(
-                "S", "All,F1-2", "All,F1-2", "H2,H6,H7,F1-2", "All,F1-2", "H5,H6,H7,F1-2", **column_widths),
-                "{:<{Type}}  {:<{Cubic}}  {:<{Hexagonal}}  {:<{Orthorhombic}}  {:<{Rhombohedral}}  {:<{General}}".format(
-                "M", "H1a,H7,F3", "H4,H7,F3", "H4,H7,F3", "H4,H7,F3", "H4,H7,F3", **column_widths),
-                 divider
-                ]
+                    recommendation_model_lines = [
+                    divider,
+                    header,
+                    divider,
+                    "{:<{Type}}  {:<{Cubic}}  {:<{Hexagonal}}  {:<{Orthorhombic}}  {:<{Rhombohedral}}  {:<{General}}".format(
+                    "I", "All,F1-2", "All,F1-2", "H2,H6,H7,F1-2", "All,F1-2", "H2,H6,H7,F1-2", **column_widths),
+                    "{:<{Type}}  {:<{Cubic}}  {:<{Hexagonal}}  {:<{Orthorhombic}}  {:<{Rhombohedral}}  {:<{General}}".format(
+                    "S", "All,F1-2", "All,F1-2", "H2,H6,H7,F1-2", "All,F1-2", "H5,H6,H7,F1-2", **column_widths),
+                    "{:<{Type}}  {:<{Cubic}}  {:<{Hexagonal}}  {:<{Orthorhombic}}  {:<{Rhombohedral}}  {:<{General}}".format(
+                    "M", "H1a,H7,F3", "H4,H7,F3", "H4,H7,F3", "H4,H7,F3", "H4,H7,F3", **column_widths),
+                    divider
+                    ]
 
-                for line in recommendation_model_lines:
-                    write_line(ec_file,line)
+                    for line in recommendation_model_lines:
+                        write_line(ec_file,line)
 
-                gap_lines = [
-                    "Insulator (I)     : bandgap > 2 eV",
-                    "Semiconductor (S) : bandgap < 2 eV",
-                    "Metal (M)         : bandgap = 0"
-                ]
+                    gap_lines = [
+                        "Insulator (I)     : bandgap > 2 eV",
+                        "Semiconductor (S) : bandgap < 2 eV",
+                        "Metal (M)         : bandgap = 0"
+                    ]
 
-                for line in gap_lines:
-                    write_line(ec_file, line)
+                    for line in gap_lines:
+                        write_line(ec_file, line)
 
-                write_line(ec_file, "--" * max_width)
-                write_line(ec_file, "References")
-                write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
+                    write_line(ec_file, "--" * max_width)
+                    write_line(ec_file, "References")
+                    write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
 
-                # Adding the references
-                references = [
-                     "[1] Comp. Mater. Sci. 50 (2011)",
-                     "[2] Scientific Reports, 3776 (2022)",
-                     "[3] MRS Bull. 23, 22 (1998)",
-                     "[4] J. Phys.: Condens. Matter 22 315503 (2010)",
-                     "[5] Intermetallics 19, 1275 (2011)",
-                     "[6] J. Appl. Phys. 125, 065105 (2019)",
-                     "[7] J. Appl. Phys. 126, 125109 (2019)"
-                ]
+                    # Adding the references
+                    references = [
+                        "[1] Comp. Mater. Sci. 50 (2011)",
+                        "[2] Scientific Reports, 3776 (2022)",
+                        "[3] MRS Bull. 23, 22 (1998)",
+                        "[4] J. Phys.: Condens. Matter 22 315503 (2010)",
+                        "[5] Intermetallics 19, 1275 (2011)",
+                        "[6] J. Appl. Phys. 125, 065105 (2019)",
+                        "[7] J. Appl. Phys. 126, 125109 (2019)"
+                    ]
 
-                for ref in references:
-                    write_line(ec_file, ref)
-
-
-            elif dimensional == '2D':
-                H1a, H1b, H1c,H2, H3, H4, H5, H6, H7, F1, F2, F3 = hardness_values 
-                write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
-                write_line(ec_file, "Hardness (H) and Fracture Toughness (F) Analysis")
-                write_line(ec_file, "WARNING: An empirical approximation; check validity!")
-                write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
-                # Printing the hardness values
-                hardness_lines = [
-                   "Hardness (H1a) = {:.2f} N/m;  Ref.[1]".format(H1a),
-                   "Hardness (H1b) = {:.2f} N/m;  Ref.[1]".format(H1b),
-                   "Hardness (H1c) = {:.2f} N/m;  Ref.[2]".format(H1c),
-                   "Hardness (H2)  = {:.2f} N/m;  Ref.[3]".format(H2),
-                   "Hardness (H3)  = {:.2f} N/m;  Ref.[4]".format(H3),
-                   "Hardness (H4)  = {:.2f} N/m;  Ref.[1]".format(H4),
-                   "Hardness (H5)  = {:.2f} N/m;  Ref.[5]".format(H5),
-                   "Hardness (H6)  = {:.2f} N/m;  Ref.[6]".format(H6),
-                   "Hardness (H7)  = {:.2f} N/m;  Ref.[7]".format(H7),
-                   "Fracture Toughness (F1)  = {:.3e} Nm⁻³/₂; Ref.[5]".format(F1),
-                   "Fracture Toughness (F2)  = {:.3e} Nm⁻³/₂;  Ref.[6]".format(F2),
-                   "Fracture Toughness (F3)  = {:.3e} Nm⁻³/₂;  Ref.[6]".format(F3)
-                ]
-
-                for line in hardness_lines:
-                   write_line(ec_file, line)
-
-                column_widths = {
-                    'Type': max(len("S"), len("I"), len("M")),
-                    'Isotropy': max(len("All,F1-2"), len("H5-7,F1-2"), len("H1a,H7,F3")),
-                    'Tetragonal': len("All,F1-2"),
-                    'Orthotropy': len("All,F1-2"),
-                    'Anisotropy': len("X-H2-4,F1-2"),
-                    'General': len("H1a,H1b,H7,F1-2")
-                }
-
-                # Format headers
-                header = "{:<{Type}}  {:<{Isotropy}}  {:<{Tetragonal}}  {:<{Orthotropy}}  {:<{Anisotropy}}  {:<{General}}".format(
-                    "", "Isotropy", "Tetragonal", "Orthotropy", "Anisotropy", "General", **column_widths)
-                divider = "--" * max_width
-
-                recommendation_model_lines = [
-                divider,
-                header,
-                divider,
-                "{:<{Type}}  {:<{Isotropy}}  {:<{Tetragonal}}  {:<{Orthotropy}}  {:<{Anisotropy}}  {:<{General}}".format(
-                "I", "All,F1-2", "All,F1-2", "All,F1-2", "X-H2-4,F1-2", "X-H2-4,F1-2", **column_widths),
-                "{:<{Type}}  {:<{Isotropy}}  {:<{Tetragonal}}  {:<{Orthotropy}}  {:<{Anisotropy}}  {:<{General}}".format(
-                "S", "All,F1-2", "All,F1-2", "All,F1-2", "X-H2-4,F1,F2", "H5-7,F1-2", **column_widths),
-                "{:<{Type}}  {:<{Isotropy}}  {:<{Tetragonal}}  {:<{Orthotropy}}  {:<{Anisotropy}}  {:<{General}}".format(
-                "M", "H1a,H7,F3", "H4,H7,F3", "H1a,H7,F3", "H1a,H7,F3", "X-H2-4,H7,F3", **column_widths),
-                 divider
-                ]
-
-                for line in recommendation_model_lines:
-                    write_line(ec_file,line)
-
-                gap_lines = [
-                    "Insulator (I)     : bandgap > 2 eV",
-                    "Semiconductor (S) : bandgap < 2 eV",
-                    "Metal (M)         : bandgap = 0"
-                ]
-
-                for line in gap_lines:
-                    write_line(ec_file, line)
-
-                write_line(ec_file, "--" * max_width)
-                write_line(ec_file, "References")
-                write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
-
-                # Adding the references
-                references = [
-                     "[1] Comp. Mater. Sci. 50 (2011)",
-                     "[2] Scientific Reports, 3776 (2022)",
-                     "[3] MRS Bull. 23, 22 (1998)",
-                     "[4] J. Phys.: Condens. Matter 22 315503 (2010)",
-                     "[5] Intermetallics 19, 1275 (2011)",
-                     "[6] J. Appl. Phys. 125, 065105 (2019)",
-                     "[7] J. Appl. Phys. 126, 125109 (2019)"
-                ]
-
-                for ref in references:
-                    write_line(ec_file, ref)
+                    for ref in references:
+                        write_line(ec_file, ref)
 
 
+                elif dimensional == '2D':
+                    H1a, H1b, H1c,H2, H3, H4, H5, H6, H7, F1, F2, F3 = hardness_values 
+                    write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
+                    write_line(ec_file, "Hardness (H) and Fracture Toughness (F) Analysis")
+                    write_line(ec_file, "WARNING: An empirical approximation; check validity!")
+                    write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
+                    # Printing the hardness values
+                    hardness_lines = [
+                      "Hardness (H1a) = {:.2f} N/m;  Ref.[1]".format(H1a),
+                      "Hardness (H1b) = {:.2f} N/m;  Ref.[1]".format(H1b),
+                      "Hardness (H1c) = {:.2f} N/m;  Ref.[2]".format(H1c),
+                      "Hardness (H2)  = {:.2f} N/m;  Ref.[3]".format(H2),
+                      "Hardness (H3)  = {:.2f} N/m;  Ref.[4]".format(H3),
+                      "Hardness (H4)  = {:.2f} N/m;  Ref.[1]".format(H4),
+                      "Hardness (H5)  = {:.2f} N/m;  Ref.[5]".format(H5),
+                      "Hardness (H6)  = {:.2f} N/m;  Ref.[6]".format(H6),
+                      "Hardness (H7)  = {:.2f} N/m;  Ref.[7]".format(H7),
+                      "Fracture Toughness (F1)  = {:.2f} MPa m¹/₂;  Ref.[5]".format(F1*1e3),
+                      "Fracture Toughness (F2)  = {:.2f} MPa m¹/₂;  Ref.[6]".format(F2*1e3),
+                      "Fracture Toughness (F3)  = {:.2f} MPa m¹/₂;  Ref.[6]".format(F3*1e3)
+                      
+                    ]
+
+                    for line in hardness_lines:
+                      write_line(ec_file, line)
+
+                    column_widths = {
+                        'Type': max(len("S"), len("I"), len("M")),
+                        'Isotropy': max(len("All,F1-2"), len("H5-7,F1-2"), len("H1a,H7,F3")),
+                        'Tetragonal': len("All,F1-2"),
+                        'Orthotropy': len("All,F1-2"),
+                        'Anisotropy': len("X-H2-4,F1-2"),
+                        'General': len("H1a,H1b,H7,F1-2")
+                    }
+
+                    # Format headers
+                    header = "{:<{Type}}  {:<{Isotropy}}  {:<{Tetragonal}}  {:<{Orthotropy}}  {:<{Anisotropy}}  {:<{General}}".format(
+                        "", "Isotropy", "Tetragonal", "Orthotropy", "Anisotropy", "General", **column_widths)
+                    divider = "--" * max_width
+
+                    recommendation_model_lines = [
+                    divider,
+                    header,
+                    divider,
+                    "{:<{Type}}  {:<{Isotropy}}  {:<{Tetragonal}}  {:<{Orthotropy}}  {:<{Anisotropy}}  {:<{General}}".format(
+                    "I", "All,F1-2", "All,F1-2", "All,F1-2", "X-H2-4,F1-2", "X-H2-4,F1-2", **column_widths),
+                    "{:<{Type}}  {:<{Isotropy}}  {:<{Tetragonal}}  {:<{Orthotropy}}  {:<{Anisotropy}}  {:<{General}}".format(
+                    "S", "All,F1-2", "All,F1-2", "All,F1-2", "X-H2-4,F1,F2", "H5-7,F1-2", **column_widths),
+                    "{:<{Type}}  {:<{Isotropy}}  {:<{Tetragonal}}  {:<{Orthotropy}}  {:<{Anisotropy}}  {:<{General}}".format(
+                    "M", "H1a,H7,F3", "H4,H7,F3", "H1a,H7,F3", "H1a,H7,F3", "X-H2-4,H7,F3", **column_widths),
+                    divider
+                    ]
+
+                    for line in recommendation_model_lines:
+                        write_line(ec_file,line)
+
+                    gap_lines = [
+                        "Insulator (I)     : bandgap > 2 eV",
+                        "Semiconductor (S) : bandgap < 2 eV",
+                        "Metal (M)         : bandgap = 0"
+                    ]
+
+                    for line in gap_lines:
+                        write_line(ec_file, line)
+
+                    write_line(ec_file, "--" * max_width)
+                    write_line(ec_file, "References")
+                    write_line(ec_file, "--" * max_width, border_char="+", filler_char="-")
+
+                    # Adding the references
+                    references = [
+                        "[1] Comp. Mater. Sci. 50 (2011)",
+                        "[2] Scientific Reports, 3776 (2022)",
+                        "[3] MRS Bull. 23, 22 (1998)",
+                        "[4] J. Phys.: Condens. Matter 22 315503 (2010)",
+                        "[5] Intermetallics 19, 1275 (2011)",
+                        "[6] J. Appl. Phys. 125, 065105 (2019)",
+                        "[7] J. Appl. Phys. 126, 125109 (2019)"
+                    ]
+
+                    for ref in references:
+                        write_line(ec_file, ref)
+
+            except:
+                pass
         write_line(ec_file, "")
         write_line(ec_file, "=" * max_width, border_char="+", filler_char="-")
 
@@ -694,14 +766,32 @@ if int(indict['run_mode'][0]) == 1 or int(indict['run_mode'][0]) == 3:
 
     #print(elastic_constants_dict)
 
+if include_gnuplot_scripts and plotparameters[0] and dimensional != '1D':
+    script_dir = 'christoffel_gnuplot_scripts'
+    result_dir = 'property_plots'
+
+        
+    write_gnuplot_scripts(script_dir)
+    main_dir = '.'
+    run_gnuplot_scripts(script_dir, result_dir, main_dir)
+    os.system('mv ' + script_dir + '/README_plots.txt ' + result_dir)
+    os.system('mv ' + script_dir + '/phase_directions.dir ./')
+
+    
+    
 time_now = datetime.now()
 time_used = (time_now - time_start).seconds
 
+total_time_now = datetime.now()
+total_time_used = (total_time_now - total_time_start).seconds
+
+
 with open('time_used.log', 'w') as time_record_file:
-    time_record_file.write("The stress calculations used %d seconds.\n" % time_used)
+    time_record_file.write("The stress calculations used %d seconds\n" % time_used)
+    time_record_file.write("The total time used for the simulation is %d seconds\n" % total_time_used)
 
+#output = sys.stdout
 
-output = sys.stdout
 
 
 if run_mode != 2:
@@ -716,6 +806,7 @@ if run_mode != 2:
     print("")
     print("")
     #print_boxed_message()
+    print(f"Total compute time is: {total_time_used} seconds") 
     print("Well done! GOOD LUCK!")
     print("")
 else:
@@ -726,7 +817,4 @@ else:
     print_boxed_message();
     print("Well done! GOOD LUCK!")
     print("")
-
-
-
 
