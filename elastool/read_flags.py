@@ -51,6 +51,12 @@ def print_boxed_message(ec_file=None):
         ("Efficient prediction of temperature-dependent elastic and", False),
         ("mechanical properties of 2D materials, S.M. Kastuar, C.E. Ekuma, Z-L. Liu,", False),
         ("Nature Scientific Report 12, 3776 (2022)", False)
+        
+        ("", False),  # Blank line for separation
+        ("ElasTool v3.0: Efficient computational and visualization", False),
+        ("toolkit for elastic and mechanical properties of materials,", False),
+        ("C.E. Ekuma, Z-L. Liu,", False),
+        ("Computer Physics Communications 300, 109161, (2024)", False)
     ]
 
     def output_line(line):
