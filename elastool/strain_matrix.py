@@ -38,7 +38,19 @@ def strain_matrix(latt_system, up0):
                                          [0., up / 2., up]])
                 strain_matrix_list.append(strain_matrix_1)
                 strain_matrix_list.append(strain_matrix_2)
+                
+            elif latt_system == 'Nanoribbon':
+                strain_matrix_1 = array([[0., 0., 0.],
+                         [0., up, 0.],
+                         [0., 0., 0.]])
+                strain_matrix_2 = array([[0., 0., up / 2.],
+                         [0., 0., 0.],
+                         [up / 2., 0., up]])
 
+                strain_matrix_list.append(strain_matrix_1)
+                strain_matrix_list.append(strain_matrix_2)
+                   
+                         
             elif latt_system == 'Trigonal1' or latt_system == 'Trigonal2':
                 strain_matrix_1 = array([[up, 0., 0.],
                                          [0., 0., 0.],

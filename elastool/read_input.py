@@ -22,8 +22,9 @@ import pkg_resources
 from datetime import datetime
 import sys
 from write_default_input import write_default_input,write_default_elastool_in,print_default_input_message_0,print_default_input_message_1,display_help
-from elastool_elate_browser import ElateAutomation
 from material_analysis import MaterialAnalysis
+from plotchristoffel import run_christoffel_simulation
+from plot_christoffel_gnu import write_gnuplot_scripts, run_gnuplot_scripts
 
 def read_elastic_tensor(file_name):
     # Reading the elastic tensor from the file
@@ -55,8 +56,9 @@ def process_parameters(input_string):
     parameters = [param.strip() for param in parameters]
     return parameters
 
+cwd = getcwd()
 def read_input():
-    cwd = getcwd()
+    
     main_infile = open('%s/elastool.in' % cwd, 'r')
     line = main_infile.readline()
     global indict
@@ -86,13 +88,12 @@ def read_input():
                         
     run_mode_flag = (len(sys.argv) > 1 and sys.argv[1] == "-0") or ('run_mode' in indict and int(indict['run_mode'][0]) == 0)
 
-    if 'method_stress_statistics' in indict and run_mode_flag:
+    if 'method_stress_statistics' in indict and run_mode_flag and not os.path.exists(os.path.join(cwd, "INCARs")):
         write_default_input(indict['method_stress_statistics'][0], cwd)
         print_default_input_message_1()
         sys.exit(0)
     return indict
-    
-       
+                   
 def print_pp_message(message):
     # Split the message into lines
     lines = message.split('\n')
@@ -110,80 +111,77 @@ def print_pp_message(message):
     # Print the bottom of the box
     print('+' + '-' * (max_width + 2) + '+')
 
-message = f"Post-processing simulation with \n ElasTool Version {pkg_resources.get_distribution('ElasTool').version} computational toolkit \n for visualizing the elastic parameters of your material. \n Calculation ended at {datetime.now().strftime('%H:%M:%S')} on {datetime.now().strftime('%Y-%m-%d')}"
 
 
-pp = False
-plotly_flag = False  # This will store the state of -T/-F
 
-if len(sys.argv) > 1:
-    first_arg = sys.argv[1].lower()
-    pp = first_arg in ["-pp", "-postprocess"]
-
-    if pp and len(sys.argv) > 2:
-        second_arg = sys.argv[2].lower()
-        if second_arg == "-plotly":
-            plotly_flag = True
-        elif second_arg == "-noplotly":
-            plotly_flag = False
-
-def post_process():
+def post_process(latt_system,plotly_flag):
     rho, dim = read_rho_dim("massdensity_dim.dat")
     elastic_tensor = read_elastic_tensor("elastic_tensor.dat")
-    print_pp_message(message)
+
+    
+    start_time = datetime.now()
+
+
+    message_start = (f"Post-processing simulation with \n"
+                     f"ElasTool Version {pkg_resources.get_distribution('ElasTool').version} computational toolkit\n"
+                     f"for computing, visualizing, and analyzing\n"
+                     f"elastic and mechanical properties of materials.\n"
+                     f"Calculation started at {start_time.strftime('%H:%M:%S')} on {start_time.strftime('%Y-%m-%d')}")
+    print_pp_message(message_start)
+    
     
     if dim == "3D":
-        analysis_instance = MaterialAnalysis(elastic_tensor, rho, plot=True, plotly=False)
+        analysis_instance = MaterialAnalysis(elastic_tensor, rho, plot=True, plotly=plotly_flag)
         analysis_instance.plot_linear_compressibility_3D()
         analysis_instance.plot_orientation_dependent_3D()
         analysis_instance.plot_contour_polar_3D()
         analysis_instance.heatmap_3D()
         analysis_instance.plot_moduli_heatmaps()
-
+        #run_christoffel_simulation(elastic_tensor, rho, dim)
+        run_christoffel_simulation(elastic_tensor, rho, dim,latt_system)
+        script_dir = 'christoffel_gnuplot_scripts'
+        result_dir = 'property_plots'
+        write_gnuplot_scripts(script_dir)
+        main_dir = '.'
+        run_gnuplot_scripts(script_dir, result_dir, main_dir)
                 
     elif dim == "2D":
-        analysis_instance = MaterialAnalysis(elastic_tensor, rho, plot=True, plotly=False)
+        analysis_instance = MaterialAnalysis(elastic_tensor, rho, plot=True, plotly=plotly_flag)
         analysis_instance.plot_orientation_dependent_2D()
         analysis_instance.plot_contour_2D()
         # analysis_instance.plot_contour_polar_2D()
         analysis_instance.heatmap_2D()
+        run_christoffel_simulation(elastic_tensor, rho, dim,latt_system)
+        script_dir = 'christoffel_gnuplot_scripts'
+        result_dir = 'property_plots'
+        write_gnuplot_scripts(script_dir)
+        main_dir = '.'
+        run_gnuplot_scripts(script_dir, result_dir, main_dir)
+        
     elif dim == "1D":
         print("1D systems generally do not have robust spatial dependence.")
+
+    end_time = datetime.now() 
+    processing_time_seconds = (end_time - start_time).total_seconds()       
+#    message_end = (f"Post-processing simulation with \n"
+#                   f"ElasTool Version {pkg_resources.get_distribution('ElasTool').version} computational toolkit\n"
+#                   f"for computing, visualizing, and analyzing\n"
+#                   f"elastic and mechanical properties of materials.\n"
+#                   f"Calculation ended at {end_time.strftime('%H:%M:%S')} on {end_time.strftime('%Y-%m-%d')}")
+
+    message_end = (f"Post-processing simulation with \n"
+                   f"ElasTool Version {pkg_resources.get_distribution('ElasTool').version} computational toolkit\n"
+                   f"for computing, visualizing, and analyzing\n"
+                   f"elastic and mechanical properties of materials.\n"
+                   f"Calculation ended at {end_time.strftime('%H:%M:%S')} on {end_time.strftime('%Y-%m-%d')}\n"
+                   f"Total processing time: {processing_time_seconds:.3f} seconds")
+
+                   
+    print_pp_message(message_end)
     sys.exit(0)
         
 
 
-
-if pp:
-    post_process()
-
-
-
-
-activate_flag = False               
-
-if len(sys.argv) > 1:
-    first_arg = sys.argv[1].lower()
-    activate_flag = first_arg in ["-elate"] 
-
-    
-
-if activate_flag:         
-    browser = input("Choose a browser; when done press Ctrl+C: (chrome, firefox, edge, safari): ").lower()
-    elate_instance = ElateAutomation(browser_name=browser)
-    elate_instance.run()
-    sys.exit(0)
-
-
-# Check if any argument is a help command
-help_commands = (len(sys.argv) > 1 and (sys.argv[1] == "-help" or sys.argv[1] == "--help" or sys.argv[1] == "--h" or sys.argv[1] == "-h"))
-if help_commands:
-    display_help()
-    sys.exit(0)
-
-
-
-cwd = os.getcwd()
 elastool_in_exists = os.path.exists(os.path.join(cwd, "elastool.in"))
 run_mode_flag_elastoolin = (len(sys.argv) > 1 and sys.argv[1] == "-0")
 if run_mode_flag_elastoolin and not elastool_in_exists:
@@ -192,5 +190,11 @@ if run_mode_flag_elastoolin and not elastool_in_exists:
   sys.exit(0)
 
 
+# Check if any argument is a help command
+help_commands = (len(sys.argv) > 1 and (sys.argv[1] == "-help" or sys.argv[1] == "--help" or sys.argv[1] == "--h" or sys.argv[1] == "-h"))
+if help_commands:
+    display_help()
+    sys.exit(0)
+    
 indict = read_input()
 

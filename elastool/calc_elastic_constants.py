@@ -313,6 +313,248 @@ def Hexagonal(latt_system, elastic_constants_dict, stress_set_dict, conversion_f
     return elastic_constants_dict, elastic_tensor_3d, SEDF_values *1.0E+9
 
 
+
+
+def Nanoribbon(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor,dimensional, plot):
+    
+    for n, up in enumerate(stress_set_dict.keys()):
+        
+        if up == 0:
+            s1 = strain_matrix(latt_system, up)[0]
+            stress_list1 = array(stress_set_dict[up][0])
+            print("DDDDDDDDDDDDD ", stress_list1)
+
+            eplisons_now = array([[s1[0][0],  s1[1][1],  s1[2][2],  0., 0.],
+                                  [s1[1][1],  s1[0][0],  s1[2][2],  0., 0.],
+                                  [0., 0., s1[0][0]+s1[1][1], s1[2][2], 0.],
+                                  [0.,    0.,     0.,     0.,   2*s1[1][2]],
+                                  [0.,    0.,     0.,     0.,   2*s1[0][2]],
+                                  [s1[0][1],   -s1[0][1], 0.,       0., 0.]])
+
+            stresses_now = array([[stress_list1[0]],
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]]])
+        else:
+            s1 = strain_matrix(latt_system, up)[0]
+            s2 = strain_matrix(latt_system, up)[1]
+            stress_list1 = array(stress_set_dict[up][0])
+            stress_list2 = array(stress_set_dict[up][1])
+
+            eplisons_now = array([[s1[0][0],  s1[1][1],  s1[2][2],  0., 0.],
+                                  [s1[1][1],  s1[0][0],  s1[2][2],  0., 0.],
+                                  [0., 0., s1[0][0]+s1[1][1], s1[2][2], 0.],
+                                  [0.,    0.,     0.,     0.,   2*s1[1][2]],
+                                  [0.,    0.,     0.,     0.,   2*s1[0][2]],
+                                  [s1[0][1],   -s1[0][1], 0.,       0., 0.],
+                                  [s2[0][0],  s2[1][1],  s2[2][2],  0., 0.],
+                                  [s2[1][1],  s2[0][0],  s2[2][2],  0., 0.],
+                                  [0., 0., s2[0][0]+s2[1][1], s2[2][2], 0.],
+                                  [0.,    0.,     0.,     0.,   2*s2[1][2]],
+                                  [0.,    0.,     0.,     0.,   2*s2[0][2]],
+                                  [s2[0][1],   -s2[0][1], 0.,       0., 0.]])
+
+            stresses_now = array([[stress_list1[0]],
+                                  [stress_list1[1]],
+                                  [stress_list1[2]],
+                                  [stress_list1[3]],
+                                  [stress_list1[4]],
+                                  [stress_list1[5]],
+                                  [stress_list2[0]],
+                                  [stress_list2[1]],
+                                  [stress_list2[2]],
+                                  [stress_list2[3]],
+                                  [stress_list2[4]],
+                                  [stress_list2[5]]])
+
+        if n == 0:
+            eplisons = deepcopy(eplisons_now)
+            stresses = deepcopy(stresses_now)
+        else:
+            eplisons = vstack((eplisons, eplisons_now))
+            stresses = vstack((stresses, stresses_now))
+
+        print("stress_set_dict  ", stresses)
+        exit(0)
+    
+    cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * conversion_factor
+
+    c11 = cij[0][0]
+    c12 = cij[1][0]
+    c13 = cij[2][0]
+    c33 = cij[3][0]
+    c44 = cij[4][0]
+
+    M = c11+c12+2*c33-4*c13
+    C2 = (c11+c12)*c33-2*c13*c13
+    c66 = (c11-c12)/2.
+
+    B_v = (2*(c11+c12)+4*c13+c33)/9.
+    G_v = (M+12*c44+12*c66)/30.
+    B_r = C2/M
+    G_r = 2.5*(C2*c44*c66)/(3*B_v*c44*c66+C2*(c44+c66))
+
+    B_vrh = (B_v+B_r)/2.
+    G_vrh = (G_v+G_r)/2.
+    E = 9*B_vrh*G_vrh/(3*B_vrh+G_vrh)
+    v = (3*B_vrh-2*G_vrh)/(2*(3*B_vrh+G_vrh))
+
+    elastic_constants_dict['c11'] = c11
+    elastic_constants_dict['c12'] = c12
+    elastic_constants_dict['c13'] = c13
+    elastic_constants_dict['c33'] = c33
+    elastic_constants_dict['c44'] = c44
+
+    elastic_constants_dict['B_v'] = B_v
+    elastic_constants_dict['B_r'] = B_r
+    elastic_constants_dict['G_v'] = G_v
+    elastic_constants_dict['G_r'] = G_r
+    elastic_constants_dict['B_vrh'] = B_vrh
+    elastic_constants_dict['G_vrh'] = G_vrh
+    elastic_constants_dict['E'] = E
+    elastic_constants_dict['v'] = v
+
+
+    elastic_tensor_3d = np.zeros((6, 6))
+    c66 = (elastic_constants_dict['c11'] - elastic_constants_dict['c12']) / 2
+
+    elastic_tensor_3d = np.array([
+        [elastic_constants_dict['c11'], elastic_constants_dict['c12'], elastic_constants_dict['c13'], 0, 0, 0],
+        [elastic_constants_dict['c12'], elastic_constants_dict['c11'], elastic_constants_dict['c13'], 0, 0, 0],
+        [elastic_constants_dict['c13'], elastic_constants_dict['c13'], elastic_constants_dict['c33'], 0, 0, 0],
+        [0, 0, 0, c44, 0, 0],
+        [0, 0, 0, 0, c44, 0],
+        [0, 0, 0, 0, 0, c66]
+    ])
+    SEDF_values = compute_SEDF(stresses, eplisons)*conversion_factor
+    plot_strainenergy_density(stresses,eplisons,dimensional, {},plot)
+    return elastic_constants_dict, elastic_tensor_3d, SEDF_values *1.0E+9
+    
+    
+def Nanoribbonold(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor, dimensional, plot):
+    eplisons = None
+    stresses = None
+    
+    print("stress_set_dict  ", stress_set_dict)
+  
+    for n, up in enumerate(stress_set_dict.keys()):
+        # Check if 'up' key exists in stress_set_dict and has at least one element
+        print("strain_matrix(latt_system, up)[0] ", strain_matrix(latt_system, up)[0])
+        if up in stress_set_dict and len(stress_set_dict[up]) > 0:
+            s1 = strain_matrix(latt_system, up)[0]
+            stress_list1 = array(stress_set_dict[up][0])
+
+            if up == 0:
+                eplisons_now = array([[s1[0][0],  s1[1][1],  s1[2][2],  0., 0.],
+                                      [s1[1][1],  s1[0][0],  s1[2][2],  0., 0.],
+                                      [0., 0., s1[0][0]+s1[1][1], s1[2][2], 0.],
+                                      [0.,    0.,     0.,     0.,   2*s1[1][2]],
+                                      [0.,    0.,     0.,     0.,   2*s1[0][2]],
+                                      [s1[0][1],   -s1[0][1], 0.,       0., 0.]])
+                stresses_now = array([[stress_list1[0]],
+                                      [stress_list1[1]],
+                                      [stress_list1[2]],
+                                      [stress_list1[3]],
+                                      [stress_list1[4]],
+                                      [stress_list1[5]]])
+            else:
+                s2 = strain_matrix(latt_system, up)[1]
+                stress_list2 = array(stress_set_dict[up][1])
+                eplisons_now = array([[s1[0][0],  s1[1][1],  s1[2][2],  0., 0.],
+                                      [s1[1][1],  s1[0][0],  s1[2][2],  0., 0.],
+                                      [0., 0., s1[0][0]+s1[1][1], s1[2][2], 0.],
+                                      [0.,    0.,     0.,     0.,   2*s1[1][2]],
+                                      [0.,    0.,     0.,     0.,   2*s1[0][2]],
+                                      [s1[0][1],   -s1[0][1], 0.,       0., 0.],
+                                      [s2[0][0],  s2[1][1],  s2[2][2],  0., 0.],
+                                      [s2[1][1],  s2[0][0],  s2[2][2],  0., 0.],
+                                      [0., 0., s2[0][0]+s2[1][1], s2[2][2], 0.],
+                                      [0.,    0.,     0.,     0.,   2*s2[1][2]],
+                                      [0.,    0.,     0.,     0.,   2*s2[0][2]],
+                                      [s2[0][1],   -s2[0][1], 0.,       0., 0.]])
+                stresses_now = array([[stress_list1[0]],
+                                      [stress_list1[1]],
+                                      [stress_list1[2]],
+                                      [stress_list1[3]],
+                                      [stress_list1[4]],
+                                      [stress_list1[5]],
+                                      [stress_list2[0]],
+                                      [stress_list2[1]],
+                                      [stress_list2[2]],
+                                      [stress_list2[3]],
+                                      [stress_list2[4]],
+                                      [stress_list2[5]]])
+            exit(0)
+            if n == 0:
+                eplisons = deepcopy(eplisons_now)
+                stresses = deepcopy(stresses_now)
+            else:
+                eplisons = vstack((eplisons, eplisons_now))
+                stresses = vstack((stresses, stresses_now))
+        else:
+            print(f"Warning: No stress data for key '{up}' in stress_set_dict or list is empty.")
+
+    if eplisons is not None and stresses is not None:
+        cij = linalg.lstsq(eplisons, stresses, rcond=None)[0] * conversion_factor
+        c11 = cij[0][0]
+        c12 = cij[1][0]
+        c13 = cij[2][0]
+        c33 = cij[3][0]
+        c44 = cij[4][0]
+
+        M = c11+c12+2*c33-4*c13
+        C2 = (c11+c12)*c33-2*c13*c13
+        c66 = (c11-c12)/2.
+
+        B_v = (2*(c11+c12)+4*c13+c33)/9.
+        G_v = (M+12*c44+12*c66)/30.
+        B_r = C2/M
+        G_r = 2.5*(C2*c44*c66)/(3*B_v*c44*c66+C2*(c44+c66))
+
+        B_vrh = (B_v+B_r)/2.
+        G_vrh = (G_v+G_r)/2.
+        E = 9*B_vrh*G_vrh/(3*B_vrh+G_vrh)
+        v = (3*B_vrh-2*G_vrh)/(2*(3*B_vrh+G_vrh))
+
+        elastic_constants_dict['c11'] = c11
+        elastic_constants_dict['c12'] = c12
+        elastic_constants_dict['c13'] = c13
+        elastic_constants_dict['c33'] = c33
+        elastic_constants_dict['c44'] = c44
+
+        elastic_constants_dict['B_v'] = B_v
+        elastic_constants_dict['B_r'] = B_r
+        elastic_constants_dict['G_v'] = G_v
+        elastic_constants_dict['G_r'] = G_r
+        elastic_constants_dict['B_vrh'] = B_vrh
+        elastic_constants_dict['G_vrh'] = G_vrh
+        elastic_constants_dict['E'] = E
+        elastic_constants_dict['v'] = v
+
+
+        elastic_tensor_3d = np.zeros((6, 6))
+        c66 = (elastic_constants_dict['c11'] - elastic_constants_dict['c12']) / 2
+
+        elastic_tensor_3d = np.array([
+            [elastic_constants_dict['c11'], elastic_constants_dict['c12'], elastic_constants_dict['c13'], 0, 0, 0],
+            [elastic_constants_dict['c12'], elastic_constants_dict['c11'], elastic_constants_dict['c13'], 0, 0, 0],
+            [elastic_constants_dict['c13'], elastic_constants_dict['c13'], elastic_constants_dict['c33'], 0, 0, 0],
+            [0, 0, 0, c44, 0, 0],
+            [0, 0, 0, 0, c44, 0],
+            [0, 0, 0, 0, 0, c66]
+        ])
+        SEDF_values = compute_SEDF(stresses, eplisons)*conversion_factor
+        plot_strainenergy_density(stresses,eplisons,dimensional, {},plot)
+        return elastic_constants_dict, elastic_tensor_3d, SEDF_values *1.0E+9
+    else:
+        # Handle the case where eplisons or stresses could not be constructed
+        print("Error: Could not construct eplisons or stresses matrices.")
+        return None, None, None
+
+        
+    
 def Trigonal1(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor,dimensional, plot):
     for n, up in enumerate(stress_set_dict.keys()):
         if up == 0:
@@ -1207,6 +1449,10 @@ def Triclinic(latt_system, elastic_constants_dict, stress_set_dict, conversion_f
     c56 = cij[19][0]
     c66 = cij[20][0]
 
+    B_v = (1/9) * (c11 + c22 + c33 + 2 * (c12 + c13 + c23))
+    G_v = (1/15) * (c11 + c22 + c33 - (c12 + c13 + c23) + 3 * (c44 + c55 + c66))
+
+
     elastic_constants_dict['c11'] = c11
     elastic_constants_dict['c12'] = c12
     elastic_constants_dict['c13'] = c13
@@ -1239,7 +1485,27 @@ def Triclinic(latt_system, elastic_constants_dict, stress_set_dict, conversion_f
         [elastic_constants_dict['c15'], elastic_constants_dict['c25'], elastic_constants_dict['c35'], elastic_constants_dict['c45'], elastic_constants_dict['c55'], elastic_constants_dict['c56']],
         [elastic_constants_dict['c16'], elastic_constants_dict['c26'], elastic_constants_dict['c36'], elastic_constants_dict['c46'], elastic_constants_dict['c56'], elastic_constants_dict['c66']]
     ])
+    S = linalg.inv(elastic_tensor_3d)
+    B_r = 1 / (S[0, 0] + S[1, 1] + S[2, 2] + 2 * (S[0, 1] + S[0, 2] + S[1, 2]))
+    G_r = 15 / (4 * (S[0, 0] + S[1, 1] + S[2, 2] - (S[0, 1] + S[0, 2] + S[1, 2])) + 3 * (S[3, 3] + S[4, 4] + S[5, 5]))
 
+    # Voigt-Reuss-Hill averages
+    B_vrh = (B_v + B_r) / 2
+    G_vrh = (G_v + G_r) / 2
+
+    # Young's modulus and Poisson's ratio
+    E = 9 * B_vrh * G_vrh / (3 * B_vrh + G_vrh)
+    v = (3 * B_vrh - 2 * G_vrh) / (2 * (3 * B_vrh + G_vrh))
+
+    elastic_constants_dict['B_v'] = B_v
+    elastic_constants_dict['B_r'] = B_r
+    elastic_constants_dict['G_v'] = G_v
+    elastic_constants_dict['G_r'] = G_r
+    elastic_constants_dict['B_vrh'] = B_vrh
+    elastic_constants_dict['G_vrh'] = G_vrh
+    elastic_constants_dict['E'] = E
+    elastic_constants_dict['v'] = v
+    
     SEDF_values = compute_SEDF(stresses, eplisons)*conversion_factor
     plot_strainenergy_density(stresses,eplisons,dimensional, {},plot)
     return elastic_constants_dict,elastic_tensor_3d, SEDF_values*1.0E+9
@@ -1548,6 +1814,7 @@ def Nanotube(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict
     
     
 def calc_elastic_constants(pos_optimized, latt_system, elastic_constants_dict, stress_set_dict,dimensional, plot):
+
     # kB to GPa
     conversion_factor = -0.1
     strains_matrix = indict['strains_matrix'][0]
@@ -1566,6 +1833,10 @@ def calc_elastic_constants(pos_optimized, latt_system, elastic_constants_dict, s
 
         elif latt_system == 'Tetragonal1':
             elastic_constants_dict,elastic_tensor,SEDF_values = Tetragonal1(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor,dimensional, plot)
+
+        elif latt_system == 'Nanoribbon':
+            elastic_constants_dict,elastic_tensor,SEDF_values = Nanoribbon(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor,dimensional, plot)
+
 
         elif latt_system == 'Tetragonal2':
             elastic_constants_dict,elastic_tensor,SEDF_values = Tetragonal2(latt_system, elastic_constants_dict, stress_set_dict, conversion_factor,dimensional, plot)

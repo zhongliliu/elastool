@@ -39,17 +39,16 @@ def vasp_run(step, kpoints_file_name, cwd):
     elif structure_file.endswith('.cif'):
         #pos = cif.read_cif(structure_file,index=0)
 
-        atoms = read(structure_file)
-
+        #atoms = read(structure_file)
         # Convert to POSCAR format
-        poscar_file = os.path.join(cwd, 'POSCAR')
-        write(poscar_file, atoms, format='vasp')
-        pos = vasp.read_vasp(poscar_file)
+        #poscar_file = os.path.join(cwd, 'POSCAR')
+        #write(poscar_file, atoms, format='vasp')
+        pos = read(structure_file) #vasp.read_vasp(poscar_file)
     else:
         raise ValueError("Unsupported structure file format!")
 
     chem_symb = pos.get_chemical_symbols()
-
+    
     # Determine unique elements
     ele_list = []
     for i in chem_symb:
@@ -59,14 +58,16 @@ def vasp_run(step, kpoints_file_name, cwd):
     if os.path.isfile('POTCAR'):
         os.system("rm POTCAR")
 
-    potential_directory = indict['potential_dir'][0]
+    potential_directory = indict.get('potential_dir', ['./'])[0]
+    
 
     for ele in ele_list:
         # Path possibilities
         potential_potcar_paths = [
             os.path.join(potential_directory, ele, "POTCAR"),
             os.path.join(potential_directory, ele + "_pv", "POTCAR"),
-            os.path.join(potential_directory, ele + "_sv", "POTCAR")
+            os.path.join(potential_directory, ele + "_sv", "POTCAR"),
+            os.path.join(potential_directory, ele + "_GW", "POTCAR")
         ]
 
         pot_file_path = next((path for path in potential_potcar_paths if os.path.exists(path)), None)

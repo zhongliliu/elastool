@@ -71,13 +71,13 @@ class Bravais2D:
     def lattice_type(self):
         if self.c > self.a and self.c > self.b:
             if abs(self.a - self.b) <= self.dist_acc:
-                if abs(self.gamma - 120) <= self.angl_acc or abs(self.gamma - 60) <= self.angl_acc:  # The last part is for some 2D systems
+                if abs(self.gamma - 120) <= self.angl_acc or abs(self.gamma - 60) <= self.angl_acc:  
                     return 'Isotropy'  # This is 2D Hexagonal system
                 elif abs(self.gamma - 90) <= self.angl_acc:
-                    return 'Tetragonal'
+                    return 'Tetragonal' #Square
             else:
                 if abs(self.gamma - 90) <= self.angl_acc:
-                    return 'Orthotropy'
+                    return 'Orthotropy' #Rectangular
                 else:
                     return 'Anisotropy'
         else:
@@ -215,23 +215,33 @@ def find_crystal_system(pos_conv, dimensional,tubestrain_type,plotparameters):
             bravais.plot()
 
     elif dimensional == '3D':
+#        cell = pos_conv.get_cell()
+#        a_length = np.linalg.norm(cell[0])
+#        b_length = np.linalg.norm(cell[1])
+#        c_length = np.linalg.norm(cell[2])
+#        if b_length > 4 * a_length or b_length > 4 * c_length or c_length > 4 * a_length:
+#             print("Lattice parameter suggests a nanoribbon structure")
+#             spg_num = 231
+#             crystal_system = [
+#                 [231, "Nanoribbon"]
+#             ]       
+#        else:
         spg = findspg(pos_conv)
         spg_num = spg[1]
         crystal_system = [
-            [2, "Triclinic"],
-            [15, "Monoclinic"],
-            [74, "Orthorombic"],
-            [88, "Tetragonal2"],
-            [142, "Tetragonal1"],
-            [148, "Trigonal2"],
-            [167, "Trigonal1"],
-            [194, "Hexagonal"],
-            [230, "Cubic"]
-        ]
+                 [2, "Triclinic"],
+                 [15, "Monoclinic"],
+                 [74, "Orthorombic"],
+                 [88, "Tetragonal2"],
+                 [142, "Tetragonal1"],
+                 [148, "Trigonal2"],
+                 [167, "Trigonal1"],
+                 [194, "Hexagonal"],
+                 [230, "Cubic"]
+         ]
 
         for l in crystal_system:
             if spg_num <= l[0]:
                 latt_system = l[1]
                 break
-
     return latt_system
