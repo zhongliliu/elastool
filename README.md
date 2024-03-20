@@ -1,6 +1,6 @@
 # ElasTool
 
-**ElasTool** (*Elastic Analysis and Simulation Toolkit for Optimized Observations and Learning*) is a powerful and innovative Python-based toolkit optimized for computing the second-order elastic constants (SOECs) and mechanical properties of crystal systems across different dimensions, including 3D structures, 2D materials, coaxially rolled 2D-based van der Waals nanostructures, and 1D nanotubes. It harnesses first-principles Density Functional Theory (DFT) and ab initio molecular dynamics, making it ideal for analyzing both zero-temperature and finite-temperature conditions.
+**ElasTool** (*Elastic Analysis and Simulation Toolkit for Optimized Observations and Learning*) is a powerful and innovative Python-based toolkit optimized for computing the second-order elastic constants (SOECs) and mechanical properties of crystal systems across different dimensions, including 3D structures, 2D materials, nanoribbons, coaxially rolled 2D-based van der Waals nanostructures, and 1D nanotubes. It harnesses first-principles Density Functional Theory (DFT) and ab initio molecular dynamics, making it ideal for analyzing both zero-temperature and finite-temperature conditions.
 
 
 ##  About ElasTool
@@ -39,7 +39,49 @@ ElasTool offers a comprehensive range of features for analyzing various material
 - **Hardness Estimation**: Employs various empirical equations to predict Vickers hardness.
 - **Fracture Toughness Analysis**: Evaluates the material's resistance to crack propagation.
 - **Elastic Anisotropy**: Examines directional variations in material properties.
-- **Compliance Matrix Eigenvalues**: Used to investigate the material's mechanical response characteristics.
+- **Compliance Matrix Eigenvalues**: Investigates the material's mechanical response characteristics.
+- **Solution of the Christoffel Equations***: 
+
+The Christoffel equations have been integrated into our approach for calculating wave velocities, power factors, and enhancement factors. This integration is based on the methodology described in [Christoffel](https://www.sciencedirect.com/science/article/pii/S0010465516301795). The feature is turned on once `plotparameters` is set to `yes` in the ElasTool input file `elastol.in`. For 2D materials, we implemented an embedding method to visualize the properties in a three-dimensional plane. Specifically, the solution of the Christoffel equations generates the following output files: 
+
+- `slow_secondary.dat`, `fast_secondary.dat`, `primary.dat` 
+  These files provide acoustic data for various directions, determined by the `Numtheta` and `Numphi` grid settings. They offer insights into the slowest, intermediate, and fastest acoustic modes. Each file comprises 17 columns with the following data:
+    1. Theta (rad)
+    2. Phi (rad)
+    3,4,5. Cartesian projection on the unit cube
+    6. Phase velocity (km/s)
+    7. Phase velocity compared to isotropic velocity (%)
+    8,9,10. Phase polarization (unit vector, dimensionless)
+    11. Group velocity (km/s)
+    12. Group velocity compared to isotropic velocity (%)
+    13,14,15. Cartesian coordinates of the Ray surface (km/s)
+    16. Power flow angle (deg)
+    17. Enhancement factor (dimensionless)
+
+- `anisotropy.dat` 
+  This file details the maximum and minimum velocities for the three acoustic modes and their directional occurrences. It also quantifies the material's overall anisotropy.
+
+- `directions.dat` 
+  Contains information on sound velocities in various directions.
+
+- `sound.out` 
+  Offers general data on the etensor tensor, bulk and shear modulus, and the isotropic sound velocities of the material.
+
+### 3.4) Visualization
+Upon enabling the plot feature, ElasTool generates Gnuplot scripts for automatic plotting of key features. These are saved as high-resolution PNG files in the `property_plots` folder. Due to the volume of files produced, enabling plot features in high-throughput settings is not recommended unless necessary. Alternatively, the post-processing mode (`run_mode=3`) can be used for plot generation for specific materials. For outputs related to the Christoffel equation solution, the following file naming conventions are important:
+
+- `phase` ----- Phase velocity
+- `group` ----- Group velocity (absolute value only)
+- `ray` ------- Ray surface (directional group velocity)
+- `pfangle` --- Power flow angle
+- `enh` ------- Enhancement factor
+- `pol` ------- Phase velocity polarization
+- `relative` -- Relative to isotropic sound velocities (for phase and group)
+- `sphere` ---- Projection onto the unit sphere
+- `cube` ------ Projection onto the unit cube
+- `eqar` ------ Equal area plane projection
+- `stereo` ---- Stereographic plane projection, preserving local shape
+- `radius` ---- For phase velocity, showing data on a sphere with radius scaled by absolute velocity
 
 These features establish ElasTool as a versatile and indispensable toolkit for scientists and engineers specializing in materials science and engineering. Its comprehensive computational capabilities are ideal for advanced material science research, providing critical insights into the mechanical and thermal properties of various materials. Whether for academic research, industrial applications, or innovative material design, ElasTool serves as a pivotal resource in exploring and understanding the intricate behavior of 3D structures, 2D materials, and nanoscale systems.
 
@@ -69,7 +111,7 @@ ElasTool is not just a computational toolkit; it's also a powerful visualization
     ```
 
 ### Post-Processing Capabilities
-To utilize ElasTool's post-processing features:
+The postprocessing is for generating the plots for visualizing the elastic and mechanical properties of materials after a complete stress-strain calculation has been carried out. The `massdensity_dim.dat` and the `elastic_tensor.dat` files are only needed if you're using elastic tensor parameters from other electronic structure codes or besides the ones you have obtained. To utilize ElasTool's post-processing features:
 1. Set up the `massdensity_dim.dat` and `elastic_tensor.dat` files as described.
 2. Use the following terminal commands (case insensitive):
     ```
@@ -125,7 +167,7 @@ ElasTool offers straightforward installation options suitable for various user p
 2. **From Source Code**:
    - Alternatively, download the source code with:
      ```
-     git clone [git@github.com:gmp007/elastool.git] or git clone [git@github.com:zhongliliu/elastool.git] 
+     git clone [git@github.com:zhongliliu/elastool.git]
      ```
    - Then, install ElasTool by navigating to the master directory and running:
      ```
@@ -164,7 +206,7 @@ This streamlined process allows users to quickly start and efficiently conduct t
 
 ## Citing ElasTool
 
-If you have used ElasTool in your research, kindly reference the appropriate publications:
+If you have used ElasTool in your research, please, consider citing the appropriate publications from the list below:
 
 ### Main ElasTool Implementation
 - Please cite for ElasTool's primary implementation:
@@ -196,17 +238,16 @@ If you have used ElasTool in your research, kindly reference the appropriate pub
   publisher={Nature Publishing Group UK London}
 }
 
-  - [Elastool V2.0: An Automated Toolkit for Elastic and Mechanical Properties of Tubular 2D-Based Nanostructures and Nanotubes](#) - Ekuma and Liu (under review)
+  - [ElasTool v3.0: Efficient computational and visualization toolkit for elastic and mechanical properties of materials](https://www.sciencedirect.com/science/article/abs/pii/S0010465524000845?via%3Dihub) - Ekuma and Liu 
 
-@article{Ekuma2023,
-  title = {Elastool V2.0: An Automated Toolkit for Elastic and Mechanical Properties of Tubular 2D-Based Nanostructures and Nanotubes},
+@article{Ekuma2024,
+  title = {ElasTool v3.0: Efficient computational and visualization toolkit for elastic and mechanical properties of materials},
   journal = {Computer Physics Communications},
-  volume = {xx},
-  pages = {xx},
+  volume = {300},
+  pages = {109161},
   year = {2024},
-  issn = {xxx},
-  doi = {xx},
-  url = {xx},
+  doi = {10.1016/j.cpc.2024.109161},
+  url = {https://www.sciencedirect.com/science/article/abs/pii/S0010465524000845?via%3Dihub},
   author = {Chinedu E. Ekuma and Zhong-Li Liu }
 }
 
@@ -214,9 +255,9 @@ If you have used ElasTool in your research, kindly reference the appropriate pub
 - For work specifically on 2D materials, refer to:
   - [Efficient prediction of temperature-dependent elastic and mechanical properties of 2D materials](https://www.nature.com/articles/s41598-022-06650-1) - Kastuar et al., 2022
 
-### Work Related to Tubular 2D-Based Nanostructures and Nanotubes
-- For studies on tubular 2D-based nanostructures and nanotubes, cite:
-  - [Elastool V2.0: An Automated Toolkit for Elastic and Mechanical Properties of Tubular 2D-Based Nanostructures and Nanotubes](#) - Ekuma and Liu (under review)
+### Work Related to Tubular 2D-Based Nanostructures and Nanotubes, and Advanced Visualization
+- For studies on tubular 2D-based nanostructures and nanotubes, please consider citing:
+  - [ElasTool v3.0: Efficient computational and visualization toolkit for elastic and mechanical properties of materials](https://www.sciencedirect.com/science/article/abs/pii/S0010465524000845?via%3Dihub) - Ekuma and Liu
 
 ### OHESS Method and Strain-Stress Methods
 - For the OHESS method and other strain-stress methods, please cite:
@@ -224,10 +265,9 @@ If you have used ElasTool in your research, kindly reference the appropriate pub
 
 
 ### Related Works
-- For related research, cite:
+- For related research, please consider citing:
   - [Calculations of single-crystal elastic constants made simple](https://doi.org/10.1016/j.cpc.2009.11.017) - Yu et al., 2010
   - [Mechanical properties and hardness of boron pnicogens BX](https://doi.org/10.1016/j.mtla.2020.100904) - Ekuma and Liu, 2020
-
 
 
 ## Contact Information
@@ -239,6 +279,5 @@ Feel free to contact us via email:
 - [zl.liu@163.com](mailto:zl.liu@163.com)
 
 Your feedback and questions are invaluable to us, and we look forward to hearing from you.
-
 
 
